@@ -27,7 +27,7 @@ const NavIcons = () => {
         alt="cart"
         width={22}
         height={22}
-        className="cursor-pointer"
+        className="cursor-pointer w-4 h-4 md:w-6 md:h-6"
         onClick={handleProfile}
       />
       {isProfileOpen && (
@@ -41,7 +41,7 @@ const NavIcons = () => {
         alt="cart"
         width={22}
         height={22}
-        className="cursor-pointer"
+        className="cursor-pointer hidden md:block w-4 h-4 md:w-6 md:h-6"
       />
       <div className="relative cursor-poinet">
         <Image
@@ -49,10 +49,12 @@ const NavIcons = () => {
           alt="cart"
           width={22}
           height={22}
-          className="cursor-pointer"
+          className="cursor-pointer w-4 h-4 md:w-6 md:h-6"
           onClick={() => setIsCartOpen((prev) => !prev)}
         />
-        <div className="absolute -top-4 -right-4 w-6 h-6 bg-lama">2</div>
+        <div className="absolute -top-4 -right-4 w-6 h-6 bg-lama rounded-full text-white text-sm flex items-center justify-center">
+          2
+        </div>
       </div>
       {isCartOpen && <CartModal />}
     </div>
