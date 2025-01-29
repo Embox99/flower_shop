@@ -18,45 +18,41 @@ const Navbar = () => {
 
   return (
     <nav className="relative">
-      <div className="flex container items-center justify-between mx-auto px-4 md:px-0">
+      <div className="flex items-center justify-between mx-auto px-4 md:px-0">
         {/* Mobile Menu Icon */}
-        <div className="md:hidden absolute left-0">
-          {!navBarOpen ? (
-            <button onClick={() => setNavBarOpen(true)}>
+        <div className="lg:hidden md:ml-7">
+          <button onClick={() => setNavBarOpen(!navBarOpen)}>
+            {!navBarOpen ? (
               <Bars3Icon className="h-8 w-8" />
-            </button>
-          ) : (
-            <button onClick={() => setNavBarOpen(false)}>
-              <XMarkIcon className="h-5 w-5" />
-            </button>
-          )}
+            ) : (
+              <XMarkIcon className="h-8 w-8" />
+            )}
+          </button>
         </div>
 
         {/* Logo */}
         <Link
           href={"/"}
-          className="text-m md:text-2xl text-black font-semibold mx-auto md:mx-0"
+          className="flex-1 md:px-6 md:flex-none text-center md:text-left text-m md:text-xl text-black font-semibold"
         >
           Flower Shop
         </Link>
 
         {/* Desktop Menu */}
-        <div className="menu md:block hidden md:w-auto" id="navbar">
-          <ul className="flex md:flex-row p-4 md:p-0 mt-0 md:space-x-8">
-            {navLinks.map((link) => (
-              <li key={link.path}>
-                <NavLink title={link.title} href={link.path} />
-              </li>
-            ))}
-          </ul>
+        <div className="hidden lg:flex lg:w-auto space-x-8 text-m lg:text-lg">
+          {navLinks.map((link) => (
+            <NavLink key={link.path} title={link.title} href={link.path} />
+          ))}
         </div>
 
         {/* Icons */}
-        <NavIcons links={navLinks} />
+        <div className="flex items-center md:px-6">
+          <NavIcons links={navLinks} />
+        </div>
       </div>
 
       {/* Mobile Overlay */}
-      {navBarOpen ? <MenuOverlay links={navLinks} /> : null}
+      {navBarOpen && <MenuOverlay links={navLinks} />}
     </nav>
   );
 };

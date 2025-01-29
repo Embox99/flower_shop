@@ -21,13 +21,13 @@ const NavIcons = () => {
     setIsProfileOpen((prev) => !prev);
   };
   return (
-    <div className="flex px-5 gap-4 xl:gap-6 relative">
+    <div className="flex px-1 gap-4 xl:gap-6 lg:px-12 relative">
       <Image
         src="/icons/profile.png"
         alt="cart"
         width={22}
         height={22}
-        className="cursor-pointer w-4 h-4 md:w-6 md:h-6"
+        className="cursor-pointer w-4 h-4 md:w-5 md:h-5"
         onClick={handleProfile}
       />
       {isProfileOpen && (
@@ -41,7 +41,7 @@ const NavIcons = () => {
         alt="cart"
         width={22}
         height={22}
-        className="cursor-pointer hidden md:block w-4 h-4 md:w-6 md:h-6"
+        className="cursor-pointer hidden md:block w-4 h-4 md:w-5 md:h-5"
       />
       <div className="relative cursor-poinet">
         <Image
@@ -52,7 +52,7 @@ const NavIcons = () => {
           className="cursor-pointer w-4 h-4 md:w-6 md:h-6"
           onClick={() => setIsCartOpen((prev) => !prev)}
         />
-        <div className="absolute -top-4 -right-4 w-6 h-6 bg-lama rounded-full text-white text-sm flex items-center justify-center">
+        <div className="absolute -top-4 -right-4 w-5 h-5 bg-lama rounded-full text-white text-sm flex items-center justify-center">
           2
         </div>
       </div>
