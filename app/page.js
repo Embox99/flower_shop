@@ -8,7 +8,7 @@ export default function Home() {
     <main>
       <Banner />
       <Navbar />
-      <div className="container">
+      <div className="">
         <Slider />
       </div>
     </main>
