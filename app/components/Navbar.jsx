@@ -33,7 +33,7 @@ const Navbar = () => {
         {/* Logo */}
         <Link
           href={"/"}
-          className="flex-1 md:px-6 md:flex-none text-center md:text-left text-m md:text-xl text-black font-semibold"
+          className="text-sm md:text-lg tracking-wide text-black font-semibold"
         >
           Flower Shop
         </Link>

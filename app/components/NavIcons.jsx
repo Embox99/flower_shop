@@ -21,7 +21,7 @@ const NavIcons = () => {
     setIsProfileOpen((prev) => !prev);
   };
   return (
-    <div className="flex px-1 gap-4 xl:gap-6 relative">
+    <div className="flex gap-3 xl:gap-6 relative">
       <Image
         src="/icons/profile.png"
         alt="cart"
