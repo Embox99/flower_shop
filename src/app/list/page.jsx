@@ -30,7 +30,7 @@ const page = () => {
       {/*FILTER*/}
       <Filter />
       {/*PRODUCTS */}
-      <h1>Bouquets For You!</h1>
+      <h1 className="mt-12 text-xl font-semibold">Bouquets For You!</h1>
       <ProductList />
     </div>
   );
