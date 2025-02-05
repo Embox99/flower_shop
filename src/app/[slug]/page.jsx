@@ -1,5 +1,6 @@
 import React from "react";
 import ProductImages from "../../components/ProductImages";
+import CustomizeProducts from "../../components/CustomizeProducts";
 
 const page = () => {
   return (
@@ -9,7 +10,9 @@ const page = () => {
         <ProductImages />
       </div>
       {/* TEXT */}
-      <div className="w-full lg:w-1/2 flex flex-col gap-6">TEXTS</div>
+      <div className="w-full lg:w-1/2 flex flex-col gap-6">
+        <CustomizeProducts />
+      </div>
     </div>
   );
 };
