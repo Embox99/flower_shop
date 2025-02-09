@@ -1,6 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useTransition } from "react";
+import TabButton from "../components/TabButton";
 import Link from "next/link";
 import Image from "next/image";
 
@@ -36,17 +37,33 @@ const TAB_DATA = [
   {
     title: "Shipments and returns",
     id: "shipments",
-    content: <div className=""></div>,
+    content: (
+      <div className="">
+        <p>Orders can be made through the website online 24 hours a day</p>
+      </div>
+    ),
   },
   {
     title: "Description",
     id: "description",
-    content: <div className=""></div>,
+    content: (
+      <div className="">
+        <p>Red roses...</p>
+        <span>Small:10 roses | Medium: 15 roses | Large: 20 roses</span>
+      </div>
+    ),
   },
 ];
 
 const CustomizeProducts = () => {
   const [tab, setTab] = useState("shipments");
+  const [isPending, startTransition] = useTransition();
+
+  const handleTabChange = (id) => {
+    startTransition(() => {
+      setTab(id);
+    });
+  };
 
   return (
     <div>
@@ -111,6 +128,21 @@ const CustomizeProducts = () => {
           </div>
         </div>
       </div>
+      <div className="mt-8 flex flex-row">
+        <TabButton
+          selectTab={() => handleTabChange("shipments")}
+          active={tab == "shipments"}
+        >
+          Shipments and returns
+        </TabButton>
+        <TabButton
+          selectTab={() => handleTabChange("description")}
+          active={tab == "description"}
+        >
+          Description
+        </TabButton>
+      </div>
+      <div className="mt-8">{TAB_DATA.find((t) => t.id === tab).content}</div>
     </div>
   );
 };
