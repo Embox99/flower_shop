@@ -10,6 +10,8 @@
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
+    "@wix/sdk": "^1.15.10",
+    "@wix/stores": "^1.0.354",
     "autoprefixer": "^10.4.20",
     "motion": "^12.4.1",
     "next": "15.1.6",
