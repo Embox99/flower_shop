@@ -13,6 +13,7 @@
     "@wix/sdk": "^1.15.10",
     "@wix/stores": "^1.0.354",
     "autoprefixer": "^10.4.20",
+    "js-cookie": "^3.0.5",
     "motion": "^12.4.1",
     "next": "15.1.6",
     "react": "^19.0.0",
@@ -20,11 +21,15 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@types/js-cookie": "^3.0.6",
     "@types/node": "22.13.0",
     "@types/react": "19.0.8",
+    "@typescript-eslint/eslint-plugin": "^8.24.0",
+    "@typescript-eslint/parser": "^8.24.0",
     "eslint": "^9",
     "eslint-config-next": "15.1.6",
     "postcss": "^8.5.1",
+    "prettier": "3.5.0",
     "tailwindcss": "^3.4.17"
   }
 }

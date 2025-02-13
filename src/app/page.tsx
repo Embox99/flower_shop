@@ -1,8 +1,24 @@
+//"use client";
+
 import Slider from "../components/Slider";
 import ProductList from "../components/ProductList";
 import CategoryList from "../components/CategoryList";
+import { wixClientServer } from "../lib/wixClientServer";
 
-export default function Home() {
+const Home = async () => {
+  // const wixClient = useWixClient();
+
+  // useEffect(() => {
+  //   const getProducts = async () => {
+  //     const res = await wixClient.products.queryProducts().find();
+  //     console.log(res);
+  //   };
+  //   getProducts();
+  // }, [wixClient]);
+
+  const wixClient = await wixClientServer();
+  const res = await wixClient.products.queryProducts().find();
+  console.log(res);
   return (
     <main>
       <div className="">
@@ -24,4 +40,6 @@ export default function Home() {
       </div>
     </main>
   );
-}
+};
+
+export default Home;
