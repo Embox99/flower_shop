@@ -47,7 +47,7 @@ const Navbar = () => {
 
         {/* Icons */}
         <div className="flex items-center md:px-6">
-          <NavIcons links={navLinks} />
+          <NavIcons />
         </div>
       </div>
 

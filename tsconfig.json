@@ -28,7 +28,7 @@
     ".next/types/**/*.ts",
     "**/*.ts",
     "**/*.tsx"
-  ],
+, "src/components/CartModal.tsx"  ],
   "exclude": [
     "node_modules"
   ]
