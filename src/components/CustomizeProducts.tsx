@@ -33,29 +33,7 @@ const items = [
   },
 ];
 
-const TAB_DATA = [
-  {
-    title: "Shipments and returns",
-    id: "shipments",
-    content: (
-      <div className="">
-        <p>Orders can be made through the website online 24 hours a day</p>
-      </div>
-    ),
-  },
-  {
-    title: "Description",
-    id: "description",
-    content: (
-      <div className="">
-        <p>Red roses...</p>
-        <span>Small:10 roses | Medium: 15 roses | Large: 20 roses</span>
-      </div>
-    ),
-  },
-];
-
-const CustomizeProducts = () => {
+const CustomizeProducts = ({ product }: { product: any }) => {
   const [tab, setTab] = useState("shipments");
   const [isPending, startTransition] = useTransition();
 
@@ -65,19 +43,49 @@ const CustomizeProducts = () => {
     });
   };
 
+  const TAB_DATA = [
+    {
+      title: "Shipments and returns",
+      id: "shipments",
+      content: (
+        <div className="">
+          <p>Orders can be made through the website online 24 hours a day</p>
+        </div>
+      ),
+    },
+    {
+      title: "Description",
+      id: "description",
+      content: (
+        <div className="">
+          <p className="mb-5">{product.description}</p>
+          <span>Small:10 roses | Medium: 15 roses | Large: 20 roses</span>
+        </div>
+      ),
+    },
+  ];
+
   return (
     <div>
       <div className="pb-20">
         <div className="md:flex gap-2 text-xs justify-end bm-2 hidden">
-          <Link href="">Light My Fire</Link>
+          <Link href="">{product.name}</Link>
           <span>/</span>
           <Link href="">Boquets</Link>
           <span>/</span>
           <Link href="">Home Page</Link>
         </div>
         <div className="flex flex-col justify-end">
-          <h1 className="text-2xl md:text-3xl py-2">Light my Fire</h1>
-          <p className="text-xl">120$</p>
+          <h1 className="text-2xl md:text-3xl py-2">{product.name}</h1>
+          {product.priceData?.price === product.priceData.discountedPrice ? (
+            <h3 className="text-xl mb-3">
+              {product.priceData?.price} {"ILS"}
+            </h3>
+          ) : (
+            <h2 className="text-xl">
+              {product.priceData.discountedPrice} {"ILS"}
+            </h2>
+          )}
           <div className="flex py-4 w-3/4 sm:w-1/2">
             <p className="font-semibold text-md md:text-xl w-1/4">Size:</p>
             <select
