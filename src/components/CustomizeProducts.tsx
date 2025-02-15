@@ -36,12 +36,35 @@ const items = [
 const CustomizeProducts = ({ product }: { product: any }) => {
   const [tab, setTab] = useState("shipments");
   const [isPending, startTransition] = useTransition();
+  const [selectedOptions, setSelectedOprions] = useState<{
+    [key: string]: string;
+  }>({});
 
   const handleTabChange = (id) => {
     startTransition(() => {
       setTab(id);
     });
   };
+
+  const handleOptionSelect = (optionType: string, choise: string) => {
+    setSelectedOprions((prev) => ({ ...prev, [optionType]: choise }));
+  };
+
+  const isVariantInStock = (choises: { [key: string]: string }) => {
+    return productVariants.some((variant) => {
+      const variantChoises = variant.choises;
+      if (!variantChoises) return false;
+      return (
+        Object.entries(choises).every(
+          ([key, value]) => variantChoises[key] === value
+        ) && variant.stock.inStock
+      );
+    });
+  };
+
+  const productId = product._id;
+  const productVariants = product.variants;
+  const productOptions = product.productOptions;
 
   const TAB_DATA = [
     {
@@ -71,20 +94,23 @@ const CustomizeProducts = ({ product }: { product: any }) => {
         <div className="md:flex gap-2 text-xs justify-end bm-2 hidden">
           <Link href="">{product.name}</Link>
           <span>/</span>
-          <Link href="">Boquets</Link>
+          <Link href="">{product.ribbon}</Link>
           <span>/</span>
-          <Link href="">Home Page</Link>
+          <Link href="/">Home Page</Link>
         </div>
         <div className="flex flex-col justify-end">
           <h1 className="text-2xl md:text-3xl py-2">{product.name}</h1>
-          {product.priceData?.price === product.priceData.discountedPrice ? (
-            <h3 className="text-xl mb-3">
-              {product.priceData?.price} {"ILS"}
-            </h3>
+          {product.price?.price === product.price?.discountedPrice ? (
+            <h2 className="font-medium text-2xl">{product.price?.price} ILS</h2>
           ) : (
-            <h2 className="text-xl">
-              {product.priceData.discountedPrice} {"ILS"}
-            </h2>
+            <div className="flex items-center gap-4">
+              <h3 className="text-xl text-gray-500 line-through">
+                {product.price?.price} ILS
+              </h3>
+              <h2 className="font-medium text-2xl">
+                {product.price?.discountedPrice} ILS
+              </h2>
+            </div>
           )}
           <div className="flex py-4 w-3/4 sm:w-1/2">
             <p className="font-semibold text-md md:text-xl w-1/4">Size:</p>
