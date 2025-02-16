@@ -45,26 +45,28 @@ const CustomizeProducts = ({ product }: { product: any }) => {
       setTab(id);
     });
   };
+  const productId = product._id;
+  const productVariants = product.variants;
+  const productOptions = product.productOptions;
 
   const handleOptionSelect = (optionType: string, choise: string) => {
     setSelectedOprions((prev) => ({ ...prev, [optionType]: choise }));
   };
 
-  const isVariantInStock = (choises: { [key: string]: string }) => {
+  const isVariantInStock = (choices: { [key: string]: string }) => {
     return productVariants.some((variant) => {
-      const variantChoises = variant.choises;
-      if (!variantChoises) return false;
+      const variantChoices = variant.choices;
+      if (!variantChoices) return false;
+
       return (
-        Object.entries(choises).every(
-          ([key, value]) => variantChoises[key] === value
-        ) && variant.stock.inStock
+        Object.entries(choices).every(
+          ([key, value]) => variantChoices[key] === value
+        ) &&
+        variant.stock?.inStock &&
+        variant.stock?.quantity > 0
       );
     });
   };
-
-  const productId = product._id;
-  const productVariants = product.variants;
-  const productOptions = product.productOptions;
 
   const TAB_DATA = [
     {
@@ -87,6 +89,8 @@ const CustomizeProducts = ({ product }: { product: any }) => {
       ),
     },
   ];
+
+  console.log(selectedOptions);
 
   return (
     <div>
@@ -112,19 +116,43 @@ const CustomizeProducts = ({ product }: { product: any }) => {
               </h2>
             </div>
           )}
-          <div className="flex py-4 w-3/4 sm:w-1/2">
-            <p className="font-semibold text-md md:text-xl w-1/4">Size:</p>
-            <select
-              name="size"
-              id=""
-              className="ring-2 ring-slate-300 rounded-sm w-3/4"
-            >
-              <option>Select an option</option>
-              <option>Small</option>
-              <option>Medium</option>
-              <option>Large</option>
-            </select>
-          </div>
+          {productOptions.map((option) => (
+            <div key={option.name} className="py-4 w-3/4 sm:w-1/2">
+              <p className="font-semibold text-md md:text-xl mb-2">
+                {option.name}:
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {option.choices.map((choice) => {
+                  const testSelection = {
+                    ...selectedOptions,
+                    [option.name]: choice.value,
+                  };
+                  const isAvailable = isVariantInStock(testSelection);
+
+                  return (
+                    <div
+                      key={choice.value}
+                      className={`px-4 py-2 border rounded cursor-pointer ${
+                        selectedOptions[option.name] === choice.value
+                          ? "bg-lama text-white"
+                          : "bg-gray-100"
+                      } ${!isAvailable ? "opacity-50" : "hover:bg-opacity-70 hover:bg-lama"}`}
+                      onClick={() =>
+                        setSelectedOprions((prev) => ({
+                          ...prev,
+                          [option.name]: choice.value,
+                        }))
+                      }
+                    >
+                      {choice.description}{" "}
+                      {!isAvailable ? "(Not in stock)" : ""}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+
           <button className="bg-lama font-semibold text-white py-2 w-3/4 sm:w-1/2 rounded-md hover:bg-[#3BB7B5] transition-colors duration-300">
             Add to Cart
           </button>
