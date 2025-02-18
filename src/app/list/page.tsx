@@ -31,7 +31,7 @@ const ListPage = async ({
         </div>
         <div className="relative w-1/3">
           <Image
-            src="/images/woman.png"
+            src="/images/list_image.png"
             alt=""
             fill
             className="object-contain"

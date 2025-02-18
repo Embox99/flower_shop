@@ -1,9 +1,11 @@
 "use client";
 
-import React, { useState, useTransition } from "react";
+import React, { useState, useTransition, useEffect } from "react";
+import { products } from "@wix/stores";
 import TabButton from "./TabButton";
 import Link from "next/link";
 import Image from "next/image";
+import Add from "./Add";
 
 const items = [
   {
@@ -26,31 +28,39 @@ const items = [
     url: "https://images.pexels.com/photos/1854664/pexels-photo-1854664.jpeg?auto=compress&cs=tinysrgb&w=800",
     href: "",
   },
-  {
-    id: "5",
-    url: "https://images.pexels.com/photos/1854664/pexels-photo-1854664.jpeg?auto=compress&cs=tinysrgb&w=800",
-    href: "",
-  },
 ];
 
 const CustomizeProducts = ({ product }: { product: any }) => {
   const [tab, setTab] = useState("shipments");
   const [isPending, startTransition] = useTransition();
-  const [selectedOptions, setSelectedOprions] = useState<{
+  const [selectedOptions, setSelectedOptions] = useState<{
     [key: string]: string;
   }>({});
+  const [selectedVariant, setSelectedVariant] = useState<products.Variant>();
+
+  const productId = product._id;
+  const productVariants = product.variants;
+  const productOptions = product.productOptions;
+
+  useEffect(() => {
+    const variant = productVariants.find((v) => {
+      const variantChoices = v.choices;
+      if (!variantChoices) return false;
+      return Object.entries(selectedOptions).every(
+        ([key, value]) => variantChoices[key] === value
+      );
+    });
+    setSelectedVariant(variant);
+  }, [selectedOptions, productVariants]);
 
   const handleTabChange = (id) => {
     startTransition(() => {
       setTab(id);
     });
   };
-  const productId = product._id;
-  const productVariants = product.variants;
-  const productOptions = product.productOptions;
 
   const handleOptionSelect = (optionType: string, choise: string) => {
-    setSelectedOprions((prev) => ({ ...prev, [optionType]: choise }));
+    setSelectedOptions((prev) => ({ ...prev, [optionType]: choise }));
   };
 
   const isVariantInStock = (choices: { [key: string]: string }) => {
@@ -63,6 +73,7 @@ const CustomizeProducts = ({ product }: { product: any }) => {
           ([key, value]) => variantChoices[key] === value
         ) &&
         variant.stock?.inStock &&
+        variant.stock?.quantity &&
         variant.stock?.quantity > 0
       );
     });
@@ -117,45 +128,73 @@ const CustomizeProducts = ({ product }: { product: any }) => {
             </div>
           )}
           {productOptions.map((option) => (
-            <div key={option.name} className="py-4 w-3/4 sm:w-1/2">
-              <p className="font-semibold text-md md:text-xl mb-2">
-                {option.name}:
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {option.choices.map((choice) => {
-                  const testSelection = {
+            <div className="flex flex-col gap-4" key={option.name}>
+              <h4 className=" mt-2 font-semibold text-md md:text-lg">
+                Choose a {option.name}
+              </h4>
+              <ul className="flex items-center gap-3">
+                {option.choices?.map((choice) => {
+                  const disabled = !isVariantInStock({
                     ...selectedOptions,
-                    [option.name]: choice.value,
-                  };
-                  const isAvailable = isVariantInStock(testSelection);
+                    [option.name!]: choice.description!,
+                  });
 
-                  return (
-                    <div
-                      key={choice.value}
-                      className={`px-4 py-2 border rounded cursor-pointer ${
-                        selectedOptions[option.name] === choice.value
-                          ? "bg-lama text-white"
-                          : "bg-gray-100"
-                      } ${!isAvailable ? "opacity-50" : "hover:bg-opacity-70 hover:bg-lama"}`}
-                      onClick={() =>
-                        setSelectedOprions((prev) => ({
-                          ...prev,
-                          [option.name]: choice.value,
-                        }))
-                      }
+                  const selected =
+                    selectedOptions[option.name!] === choice.description;
+
+                  const clickHandler = disabled
+                    ? undefined
+                    : () =>
+                        handleOptionSelect(option.name!, choice.description!);
+
+                  return option.name === "Color" ? (
+                    <li
+                      className="w-8 h-8 rounded-full ring-1 ring-gray-300 relative"
+                      style={{
+                        backgroundColor: choice.value,
+                        cursor: disabled ? "not-allowed" : "pointer",
+                      }}
+                      onClick={clickHandler}
+                      key={choice.description}
                     >
-                      {choice.description}{" "}
-                      {!isAvailable ? "(Not in stock)" : ""}
-                    </div>
+                      {selected && (
+                        <div className="absolute w-10 h-10 rounded-full ring-2 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" />
+                      )}
+                      {disabled && (
+                        <div className="absolute w-10 h-[2px] bg-red-400 rotate-45 top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2" />
+                      )}
+                    </li>
+                  ) : (
+                    <li
+                      className="ring-1 ring-lama text-lama rounded-md py-1 px-4 text-sm"
+                      style={{
+                        cursor: disabled ? "not-allowed" : "pointer",
+                        backgroundColor: selected
+                          ? "#f35c7a"
+                          : disabled
+                            ? "#FBCFE8"
+                            : "white",
+                        color: selected || disabled ? "white" : "#f35c7a",
+                        boxShadow: disabled ? "none" : "",
+                      }}
+                      key={choice.description}
+                      onClick={clickHandler}
+                    >
+                      {choice.description}
+                    </li>
                   );
                 })}
-              </div>
+              </ul>
             </div>
           ))}
-
-          <button className="bg-lama font-semibold text-white py-2 w-3/4 sm:w-1/2 rounded-md hover:bg-[#3BB7B5] transition-colors duration-300">
-            Add to Cart
-          </button>
+          <Add
+            productId={productId}
+            variantId={
+              selectedVariant?._id || "00000000-0000-0000-0000-000000000000"
+            }
+            stockNumber={selectedVariant?.stock?.quantity || 0}
+          />
+      
         </div>
       </div>
       <div>

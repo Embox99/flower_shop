@@ -17,7 +17,7 @@ const Navbar = () => {
   const [navBarOpen, setNavBarOpen] = useState(false);
 
   return (
-    <nav className="relative px-4 md:px-8 lg:px-16 xl:px-32 2xl:px-64 mb-3 md:mb-5">
+    <nav className="relative px-4 md:px-8 lg:px-16 xl:px-32 2xl:px-64 mb-3 py-3 bg-white">
       <div className="flex items-center justify-between mx-auto px-4 md:px-0">
         {/* Mobile Menu Icon */}
         <div className="lg:hidden">
