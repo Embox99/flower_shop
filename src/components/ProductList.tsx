@@ -2,10 +2,11 @@ import Link from "next/link";
 import Image from "next/image";
 import React from "react";
 import DOMPurify from "isomorphic-dompurify";
+import Pagination from "./Pagination";
 import { wixClientServer } from "../lib/wixClientServer";
 import { products } from "@wix/stores";
 
-const PRODUCT_PER_PAGE = 20;
+const PRODUCT_PER_PAGE = 4;
 
 const ProductList = async ({
   categoryId,
@@ -30,23 +31,22 @@ const ProductList = async ({
         ? parseInt(searchParams.page) * (limit || PRODUCT_PER_PAGE)
         : 0
     );
-
-  if (searchParams?.sort) {
-    const [sortType, sortBy] = searchParams.sort.split(" ");
-    if (sortBy === "price") {
-      if (sortType === "asc") {
-        productQuery.ascending("price");
-      } else if (sortType === "desc") {
-        productQuery.descending("price");
-      }
-    }
-  }
-
   const res = await productQuery.find();
+
+  const [sortType, sortByRaw] = (searchParams?.sort || "").split(" ");
+  let sortedItems = res.items;
+
+  if (sortByRaw === "price") {
+    sortedItems = [...res.items].sort((a, b) => {
+      const priceA = a.priceRange?.minValue || 0;
+      const priceB = b.priceRange?.minValue || 0;
+      return sortType === "asc" ? priceA - priceB : priceB - priceA;
+    });
+  }
 
   return (
     <div className="mt-12 flex gap-8 gap-y-16 justify-between flex-wrap">
-      {res.items.map((product: products.Product) => (
+      {sortedItems.map((product: products.Product) => (
         <Link
           href={"/" + product.slug}
           className="w-full flex flex-col gap-4 sm:w-[45%] lg:w-[22%]"
@@ -98,6 +98,11 @@ const ProductList = async ({
           </button>
         </Link>
       ))}
+      <Pagination
+        currentPage={res.currentPage || 0}
+        hasPrv={res.hasPrev()}
+        hasNxt={res.hasNext()}
+      />
     </div>
   );
 };

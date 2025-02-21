@@ -6,18 +6,16 @@ import Image from "next/image";
 import { Suspense } from "react";
 
 const ListPage = async ({
-  searchParams: rawSearchParams,
+  searchParams,
 }: {
-  searchParams: Promise<{ [key: string]: string | undefined }>;
+  searchParams: Promise<{ cat?: string }>;
 }) => {
-  const searchParams = await rawSearchParams;
-  const cat = searchParams.cat;
+  const { cat } = await searchParams;
 
   const wixClient = await wixClientServer();
   const category = await wixClient.collections.getCollectionBySlug(
     cat || "all-products"
   );
-
   return (
     <div className="px-4 md:px-8 lg:px-16 xl:px-32 2xl:px-64 relative">
       {/* CAMPAIGN */}
@@ -51,7 +49,7 @@ const ListPage = async ({
           categoryId={
             category.collection?._id || "00000000-000000-000000-000000000001"
           }
-          searchParams={searchParams} // Передаём уже обработанные searchParams
+          searchParams={searchParams}
         />
       </Suspense>
     </div>
