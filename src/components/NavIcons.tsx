@@ -3,16 +3,20 @@ import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import CartModal from "./CartModal";
+import Cookies from "js-cookie";
 import { useRouter } from "next/navigation";
+import { useWixClient } from "../hooks/useWixClient";
 
 const NavIcons = () => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [isCartOpen, setIsCartOpen] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
+
   const router = useRouter();
 
   //TEPMORARY
-
-  const isLoggedIn = true;
+  const wixClient = useWixClient();
+  const isLoggedIn = wixClient.auth.loggedIn();
   const handleProfile = () => {
     if (!isLoggedIn) {
       router.push("/login");
@@ -20,6 +24,16 @@ const NavIcons = () => {
     }
     setIsProfileOpen((prev) => !prev);
   };
+
+  const handleLogout = async () => {
+    setIsLoading(true);
+    Cookies.remove("refreshToken");
+    const { logoutUrl } = await wixClient.auth.logout(window.location.href);
+    setIsLoading(false);
+    setIsProfileOpen(false);
+    router.push(logoutUrl);
+  };
+
   return (
     <div className="flex gap-3 xl:gap-6 relative">
       <Image
@@ -33,7 +47,9 @@ const NavIcons = () => {
       {isProfileOpen && (
         <div className=" z-20 absolute p-4 rounded-md top-12 left-0 text-sm bg-white shadow-[0_3px_10px_rgb(0,0,0,0.2)]">
           <Link href="/">Profile</Link>
-          <div className="mt-2 cursor-pointer hover:text-gray-500">Log out</div>
+          <div className="mt-2 cursor-pointer" onClick={handleLogout}>
+            {isLoading ? "Logging out" : "Logout"}
+          </div>
         </div>
       )}
       <Image
