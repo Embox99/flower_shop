@@ -98,11 +98,13 @@ const ProductList = async ({
           </button>
         </Link>
       ))}
-      <Pagination
-        currentPage={res.currentPage || 0}
-        hasPrv={res.hasPrev()}
-        hasNxt={res.hasNext()}
-      />
+      {searchParams?.cat || searchParams?.name ? (
+        <Pagination
+          currentPage={res.currentPage || 0}
+          hasPrv={res.hasPrev()}
+          hasNxt={res.hasNext()}
+        />
+      ) : null}
     </div>
   );
 };
