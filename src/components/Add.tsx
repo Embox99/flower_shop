@@ -3,6 +3,7 @@
 // import { useCartStore } from "../hooks/useCartStore";
 import { useWixClient } from "../hooks/useWixClient";
 import { useState } from "react";
+import { useCartStore } from "../hooks/useCartStore";
 
 const Add = ({
   productId,
@@ -24,24 +25,10 @@ const Add = ({
     }
   };
 
+  const { addItem, isLoading } = useCartStore();
+
   const wixClient = useWixClient();
 
-  const addItem = async () => {
-    const responce = await wixClient.currentCart.addToCurrentCart({
-      lineItems: [
-        {
-          catalogReference: {
-            appId: process.env.NEXT_PUBLIC_WIX_APP_ID,
-            catalogItemId: productId,
-            ...(variantId && { options: { variantId } }),
-          },
-          quantity: quantity,
-        },
-      ],
-    });
-  };
-
-  //   const { addItem, isLoading } = useCartStore();
 
   return (
     <div className="flex flex-col gap-4">
@@ -78,9 +65,9 @@ const Add = ({
           )}
         </div>
         <button
-          onClick={() => addItem()}
-          // disabled={isLoading}
-          className="bg-lama font-semibold mt-4 text-white py-2 w-3/4 sm:w-1/2 rounded-md hover:bg-[#3BB7B5] transition-colors duration-300"
+          onClick={() => addItem(wixClient, productId, variantId, quantity)}
+          disabled={isLoading}
+          className="bg-lama font-semibold mt-4 text-white py-2 w-3/4 sm:w-1/2 rounded-md hover:bg-[#3BB7B5] transition-colors duration-300 disabled:opacity-75"
         >
           Add to Cart
         </button>
