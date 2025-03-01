@@ -14,7 +14,7 @@ const SuccessPage = () => {
 
     const timer = setTimeout(() => {
       router.push("/orders/" + orderId);
-    }, 5000);
+    }, 10000);
 
     return () => {
       clearTimeout(timer);
