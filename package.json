@@ -11,6 +11,7 @@
   "dependencies": {
     "@heroicons/react": "^2.2.0",
     "@wix/ecom": "^1.0.946",
+    "@wix/members": "^1.0.197",
     "@wix/redirects": "^1.0.73",
     "@wix/sdk": "^1.15.10",
     "@wix/stores": "^1.0.354",
@@ -22,6 +23,7 @@
     "react": "^19.0.0",
     "react-confetti": "^6.2.3",
     "react-dom": "^19.0.0",
+    "timeago.js": "^4.0.2",
     "zustand": "^5.0.3"
   },
   "devDependencies": {
