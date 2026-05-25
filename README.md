@@ -29,7 +29,8 @@ v1 was a redesign on top of **Wix Headless**. v2 brings the backend home:
 | Admin | Wix dashboard | **Custom** admin under `/admin` |
 | Payments | Wix-hosted | Mocked — staff marks PAID in admin |
 
-The visual storefront from v1 (botanical aesthetic, Cormorant + Inter Tight, illustrated bouquets, cart drawer, editorial home, hand-rolled product page) is preserved exactly.
+
+**P.S.** I know the sidebar, sign-in page, and a few other UI elements look a bit cringe right now, but I'll polish them in the upcoming updates! 🛠️
 
 ## Preview
 
@@ -196,5 +197,4 @@ npm run test:e2e:ui   # Playwright UI mode
 
 <div align="center">
 <sub>If this saved you a Wix subscription, consider giving it a ⭐.</sub>
-<sub>**P.S.** I know the sidebar, sign-in page, and a few other UI elements look a bit cringe right now, but I'll polish them in the upcoming updates! 🛠️<sub>
 </div>
