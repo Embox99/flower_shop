@@ -1,0 +1,73 @@
+{
+  "name": "flower-shop",
+  "version": "2.0.0",
+  "private": true,
+  "scripts": {
+    "dev":       "next dev",
+    "build":     "prisma generate && next build",
+    "start":     "next start",
+    "lint":      "next lint",
+
+    "docker:up":      "docker compose up -d",
+    "docker:down":    "docker compose down",
+    "docker:logs":    "docker compose logs -f",
+
+    "db:generate":    "prisma generate",
+    "db:migrate":     "prisma migrate dev",
+    "db:migrate:deploy": "prisma migrate deploy",
+    "db:reset":       "prisma migrate reset --force",
+    "db:seed":        "tsx prisma/seed.ts",
+    "db:studio":      "prisma studio",
+
+    "setup":          "npm run docker:up && sleep 4 && npm run db:migrate && npm run db:seed",
+
+    "test":           "vitest run",
+    "test:watch":     "vitest",
+    "test:e2e":       "playwright test",
+    "test:e2e:ui":    "playwright test --ui"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
+  "dependencies": {
+    "@auth/prisma-adapter":  "^2.7.4",
+    "@aws-sdk/client-s3":            "^3.679.0",
+    "@aws-sdk/s3-request-presigner": "^3.679.0",
+    "@prisma/client":  "^5.22.0",
+    "argon2":          "^0.41.1",
+    "ioredis":         "^5.4.2",
+    "isomorphic-dompurify": "^2.21.0",
+    "js-cookie":       "^3.0.5",
+    "motion":          "^12.4.1",
+    "next":            "15.1.6",
+    "next-auth":       "^4.24.10",
+    "nodemailer":      "^7.0.7",
+    "react":           "^19.0.0",
+    "react-confetti":  "^6.2.3",
+    "react-dom":       "^19.0.0",
+    "timeago.js":      "^4.0.2",
+    "zod":             "^3.23.8",
+    "zustand":         "^5.0.3"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc":              "^3",
+    "@playwright/test":              "^1.49.0",
+    "@types/js-cookie":              "^3.0.6",
+    "@types/node":                   "22.13.0",
+    "@types/nodemailer":             "^7.0.0",
+    "@types/react":                  "19.0.8",
+    "@typescript-eslint/eslint-plugin": "^8.24.0",
+    "@typescript-eslint/parser":     "^8.24.0",
+    "autoprefixer":                  "^10.4.20",
+    "eslint":                        "^9",
+    "eslint-config-next":            "15.1.6",
+    "happy-dom":                     "^15.11.6",
+    "postcss":                       "^8.5.1",
+    "prettier":                      "3.5.0",
+    "prisma":                        "^5.22.0",
+    "tailwindcss":                   "^3.4.17",
+    "tsx":                           "^4.19.2",
+    "typescript":                    "^5.6.3",
+    "vitest":                        "^2.1.5"
+  }
+}

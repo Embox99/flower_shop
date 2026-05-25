@@ -1,0 +1,448 @@
+// Prisma schema for Flower Shop v2.
+// Models follow the admin design 1:1 (orders, products, variants, subscriptions, …).
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = []
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─────────────────────────── AUTH (NextAuth schema) ───────────────────────────
+
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  emailVerified DateTime?
+  name          String?
+  image         String?
+  phone         String?
+  role          Role      @default(CUSTOMER)
+
+  // Hashed password — only used for STAFF/OWNER who sign in with credentials.
+  passwordHash  String?
+
+  accounts      Account[]
+  sessions      Session[]
+  addresses     Address[]
+  carts         Cart[]
+  orders        Order[]
+  subscriptions Subscription[]
+  events        OrderEvent[] @relation("EventActor")
+
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  @@index([role])
+}
+
+enum Role {
+  CUSTOMER
+  STAFF
+  OWNER
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// ─────────────────────────── ADDRESS BOOK ───────────────────────────
+
+model Address {
+  id        String  @id @default(cuid())
+  userId    String
+  label     String? // "Home", "Mum", …
+  line1     String
+  line2     String?
+  city      String
+  zip       String?
+  country   String  @default("IL")
+  phone     String?
+  isDefault Boolean @default(false)
+
+  user      User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+// ─────────────────────────── CATALOG ───────────────────────────
+
+model Category {
+  id        String  @id @default(cuid())
+  slug      String  @unique
+  name      String
+  subtitle  String?
+  hue       String? // hex for the design system
+  image     String?
+  sortOrder Int     @default(0)
+
+  products  Product[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Product {
+  id          String        @id @default(cuid())
+  slug        String        @unique
+  sku         String        @unique
+  name        String
+  shortDesc   String?
+  longDesc    String?
+  badge       String?       // "Bestseller", "New", "Limited"
+  status      ProductStatus @default(ACTIVE)
+
+  basePrice    Int           // minor units (cents)
+  comparePrice Int?          // for sale display
+  cost         Int?
+  taxClass     String        @default("standard")
+  currency     String        @default("USD")
+
+  categoryId   String?
+  category     Category?     @relation(fields: [categoryId], references: [id], onDelete: SetNull)
+
+  palette      Json          // string[] — used by illustration fallback + swatches
+  height       String?       // "42 cm"
+  vase         String?       // "Wide-mouth", "Tall", …
+  leadTime     LeadTime      @default(SAME_DAY)
+  subPolicy    SubPolicy     @default(SAME_PALETTE)
+
+  images       ProductImage[]
+  variants     ProductVariant[]
+  stems        StemComponent[]
+  cartItems    CartItem[]
+  orderItems   OrderItem[]
+
+  // Aggregated for fast read-paths; recomputed on stock movements.
+  totalStock   Int           @default(0)
+  totalSold    Int           @default(0)
+
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+
+  @@index([categoryId, status])
+  @@index([status])
+}
+
+enum ProductStatus {
+  ACTIVE
+  DRAFT
+  ARCHIVED
+}
+
+enum LeadTime {
+  SAME_DAY      // order before noon
+  NEXT_DAY
+  TWO_DAYS
+  CUSTOM
+}
+
+enum SubPolicy {
+  SAME_PALETTE
+  CALL_FIRST
+  NO_SUBSTITUTE
+}
+
+model ProductImage {
+  id        String  @id @default(cuid())
+  productId String
+  url       String
+  alt       String?
+  sortOrder Int     @default(0)
+  isPrimary Boolean @default(false)
+
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+}
+
+model ProductVariant {
+  id         String  @id @default(cuid())
+  productId  String
+  label      String  // "Posy", "Standard", "Generous"
+  sku        String  @unique
+  stems      Int?
+  priceDelta Int     @default(0) // applied on top of Product.basePrice (cents)
+  stockQty   Int     @default(0)
+  sortOrder  Int     @default(0)
+
+  product    Product     @relation(fields: [productId], references: [id], onDelete: Cascade)
+  cartItems  CartItem[]
+  orderItems OrderItem[]
+
+  @@index([productId])
+}
+
+model StemComponent {
+  id        String  @id @default(cuid())
+  productId String
+  name      String  // "Garden rose · David Austin"
+  qty       Int
+  swatchHex String? // for the cute little dot
+
+  product   Product @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
+}
+
+// ─────────────────────────── CART ───────────────────────────
+
+// Carts live in two flavours: anonymous (cookie token) and signed-in (userId).
+// When a cookie cart hits checkout-as-user we merge into the user's cart.
+
+model Cart {
+  id           String     @id @default(cuid())
+  userId       String?
+  token        String?    @unique // anon cookie value
+  currency     String     @default("USD")
+
+  items        CartItem[]
+
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+
+  user         User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model CartItem {
+  id          String          @id @default(cuid())
+  cartId      String
+  productId   String
+  variantId   String?
+  qty         Int             @default(1)
+  addVase     Boolean         @default(false)
+  giftMessage String?
+
+  cart        Cart            @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  product     Product         @relation(fields: [productId], references: [id])
+  variant     ProductVariant? @relation(fields: [variantId], references: [id])
+
+  createdAt   DateTime        @default(now())
+
+  @@index([cartId])
+}
+
+// ─────────────────────────── ORDERS ───────────────────────────
+
+model Order {
+  id              String        @id @default(cuid())
+  code            String        @unique // "FS-21847"
+  userId          String?       // null for guest checkout
+
+  status          OrderStatus   @default(NEW)
+  paymentStatus   PaymentStatus @default(PENDING)
+
+  // Snapshot of money at the time of order — never recomputed.
+  subtotal        Int
+  deliveryFee     Int           @default(0)
+  discountTotal   Int           @default(0)
+  total           Int
+  currency        String        @default("USD")
+
+  // Delivery
+  deliveryWindow  String?       // "12 – 3pm", "Pick up", "Letterbox"
+  deliveryDate    DateTime?
+  recipientName   String?
+  recipientPhone  String?
+  addressLine1    String?
+  addressLine2    String?
+  city            String?
+  zip             String?
+  country         String?
+
+  // Gift / sender notes
+  giftMessage     String?
+  internalNotes   String?
+
+  items           OrderItem[]
+  events          OrderEvent[]
+
+  // Payment hook-up (mocked for now — we just flag PAID from the admin)
+  paymentRef      String?
+
+  user            User?         @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([status, createdAt])
+  @@index([userId])
+}
+
+enum OrderStatus {
+  NEW
+  TYING
+  READY
+  OUT_FOR_DELIVERY
+  DELIVERED
+  CANCELED
+}
+
+enum PaymentStatus {
+  PENDING
+  PAID
+  REFUNDED
+}
+
+model OrderItem {
+  id            String          @id @default(cuid())
+  orderId       String
+  productId     String?
+  variantId     String?
+
+  // Snapshots — preserve what was bought even if catalog changes.
+  productName   String
+  variantLabel  String?
+  unitPrice     Int
+  qty           Int             @default(1)
+  total         Int
+
+  order         Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product       Product?        @relation(fields: [productId], references: [id], onDelete: SetNull)
+  variant       ProductVariant? @relation(fields: [variantId], references: [id], onDelete: SetNull)
+
+  @@index([orderId])
+}
+
+model OrderEvent {
+  id        String         @id @default(cuid())
+  orderId   String
+  kind      OrderEventKind
+  message   String?
+  actorId   String?
+
+  order     Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  actor     User?          @relation("EventActor", fields: [actorId], references: [id], onDelete: SetNull)
+
+  createdAt DateTime       @default(now())
+
+  @@index([orderId, createdAt])
+}
+
+enum OrderEventKind {
+  PLACED
+  PAID
+  ACCEPTED
+  TYING
+  READY
+  OUT
+  DELIVERED
+  CANCELED
+  NOTE
+  REFUNDED
+}
+
+// ─────────────────────────── SUBSCRIPTIONS ───────────────────────────
+
+model Subscription {
+  id              String              @id @default(cuid())
+  userId          String
+  productId       String?
+  cadence         SubscriptionCadence
+  status          SubscriptionStatus  @default(ACTIVE)
+
+  value           Int     // per cycle, cents
+  currency        String  @default("USD")
+  nextDelivery    DateTime?
+  deliveredCount  Int     @default(0)
+  totalCycles     Int?    // null = open-ended
+
+  user            User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  @@index([userId, status])
+}
+
+enum SubscriptionCadence {
+  WEEKLY
+  FORTNIGHTLY
+  MONTHLY
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  PAUSED
+  CANCELED
+}
+
+// ─────────────────────────── DISCOUNTS ───────────────────────────
+
+model DiscountCode {
+  id         String       @id @default(cuid())
+  code       String       @unique
+  type       DiscountType
+  value      Int          // percent (1–100) or fixed amount (cents)
+  validFrom  DateTime?
+  validUntil DateTime?
+  usageLimit Int?
+  usedCount  Int          @default(0)
+  active     Boolean      @default(true)
+
+  createdAt  DateTime     @default(now())
+}
+
+enum DiscountType {
+  PERCENT
+  FIXED
+}
+
+// ─────────────────────────── CONTENT (journal posts, banners) ───────────────────────────
+
+model JournalPost {
+  id        String  @id @default(cuid())
+  slug      String  @unique
+  title     String
+  excerpt   String?
+  bodyMd    String
+  coverUrl  String?
+  published Boolean @default(false)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+// ─────────────────────────── SHOP SETTINGS (key/value) ───────────────────────────
+
+model Setting {
+  key       String  @id
+  value     Json
+  updatedAt DateTime @updatedAt
+}

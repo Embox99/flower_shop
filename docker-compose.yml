@@ -1,0 +1,68 @@
+version: "3.9"
+
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: fs-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: flower
+      POSTGRES_PASSWORD: flower
+      POSTGRES_DB: flower_shop
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U flower -d flower_shop"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    container_name: fs-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    command: ["redis-server", "--save", "60", "1", "--appendonly", "no"]
+
+  minio:
+    image: minio/minio:latest
+    container_name: fs-minio
+    restart: unless-stopped
+    environment:
+      MINIO_ROOT_USER: minio
+      MINIO_ROOT_PASSWORD: miniominio
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio-data:/data
+    command: server /data --console-address ":9001"
+
+  minio-init:
+    image: minio/mc:latest
+    container_name: fs-minio-init
+    depends_on:
+      - minio
+    entrypoint: >
+      /bin/sh -c "
+      sleep 3 &&
+      mc alias set local http://minio:9000 minio miniominio &&
+      mc mb -p local/flower-shop || true &&
+      mc anonymous set download local/flower-shop &&
+      echo 'minio bucket ready'
+      "
+
+  mailhog:
+    image: mailhog/mailhog:latest
+    container_name: fs-mailhog
+    restart: unless-stopped
+    ports:
+      - "1025:1025" # SMTP — set EMAIL_SERVER=smtp://localhost:1025
+      - "8025:8025" # web UI — http://localhost:8025
+
+volumes:
+  postgres-data:
+  minio-data:
