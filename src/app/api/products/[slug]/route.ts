@@ -1,6 +1,6 @@
 import { prisma } from "../../../../lib/prisma";
 import { json, route, bad } from "../../../../lib/api";
-import { toPublicProduct } from "../route";
+import { toPublicProduct } from "../../../../lib/serializers";
 
 /**
  * GET /api/products/[slug] — full product detail incl. variants + stems.

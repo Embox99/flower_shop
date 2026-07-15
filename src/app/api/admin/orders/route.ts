@@ -2,7 +2,7 @@ import { z } from "zod";
 import { prisma } from "../../../../lib/prisma";
 import { json, route, readBody, readPaging } from "../../../../lib/api";
 import { requireStaff } from "../../../../lib/auth-helpers";
-import { serializeOrder } from "../../orders/route";
+import { serializeOrder } from "../../../../lib/serializers";
 
 /**
  * GET /api/admin/orders

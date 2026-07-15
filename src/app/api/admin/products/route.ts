@@ -51,7 +51,9 @@ export const POST = route(async (req: Request) => {
   await requireStaff();
   const data = await readBody(req, createSchema);
   const product = await prisma.product.create({
-    data: { ...data, palette: data.palette as any },
+    // zod's inferred type degrades under non-strict TS (all fields optional),
+    // so Prisma's create union can't be satisfied without a cast.
+    data: { ...data, categoryId: data.categoryId ?? null } as any,
   });
   return json({ product }, { status: 201 });
 });

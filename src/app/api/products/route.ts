@@ -1,5 +1,6 @@
 import { prisma } from "../../../lib/prisma";
 import { json, route, readPaging } from "../../../lib/api";
+import { toPublicProduct } from "../../../lib/serializers";
 
 /**
  * GET /api/products
@@ -47,26 +48,3 @@ export const GET = route(async (req: Request) => {
     total, page, limit, hasMore: skip + items.length < total,
   });
 });
-
-/** Public shape used by the storefront. Hides cost, internal notes etc. */
-export function toPublicProduct(p: any) {
-  return {
-    id: p.id,
-    slug: p.slug,
-    sku: p.sku,
-    name: p.name,
-    shortDesc: p.shortDesc,
-    longDesc: p.longDesc,
-    badge: p.badge,
-    price: p.basePrice,
-    comparePrice: p.comparePrice,
-    currency: p.currency,
-    palette: p.palette || [],
-    height: p.height,
-    vase: p.vase,
-    category: p.category ? { slug: p.category.slug, name: p.category.name } : null,
-    images: (p.images || []).map((i: any) => ({ id: i.id, url: i.url, alt: i.alt, isPrimary: i.isPrimary })),
-    stems: p.stems,
-    inStock: (p.totalStock ?? 0) > 0 || true, // default true for placeholder catalog
-  };
-}

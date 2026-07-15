@@ -2,158 +2,209 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { prisma } from "../../../../lib/prisma";
 import StatusPill from "../../../../components/admin/StatusPill";
-import OrderActions from "./OrderActions";
+import OrderActions, { NoteForm } from "./OrderActions";
 
-const fmt = (cents: number) => `$${(cents / 100).toFixed(0)}`;
+const fmt = (cents: number) => `$${(cents / 100).toFixed(2)}`;
 
-export default async function AdminOrderPage({
+const when = (d: Date) =>
+  new Date(d).toLocaleString("en-GB", {
+    day: "2-digit",
+    month: "short",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
+export default async function AdminOrderDetail({
   params,
 }: {
   params: Promise<{ code: string }>;
 }) {
   const { code } = await params;
-  const order = await prisma.order.findFirst({
-    where: { OR: [{ id: code }, { code }] },
+
+  const order = await prisma.order.findUnique({
+    where: { code: decodeURIComponent(code) },
     include: {
-      items: true,
-      events: { orderBy: { createdAt: "asc" }, include: { actor: { select: { name: true, email: true } } } },
-      user: { select: { id: true, name: true, email: true, phone: true } },
+      items: { include: { product: { select: { slug: true } } } },
+      events: {
+        orderBy: { createdAt: "desc" },
+        include: { actor: { select: { name: true, email: true } } },
+      },
+      user: { select: { name: true, email: true, phone: true } },
     },
   });
   if (!order) notFound();
 
   return (
     <div className="ad-page">
-      <Link href="/admin/orders" className="ad-link-btn" style={{ marginBottom: 14, display: "inline-block" }}>
-        ← Back to orders
-      </Link>
-
       <div className="ad-page-head">
         <div className="ad-page-head-text">
           <span className="ad-eyebrow">
-            {new Date(order.createdAt).toLocaleString("en-GB")} · {order.city || "—"}
+            <Link href="/admin/orders">Orders</Link> / detail
           </span>
-          <h1 className="ad-h1">Order <em>{order.code}</em></h1>
+          <h1 className="ad-h1">
+            {order.code}{" "}
+            <StatusPill status={order.status} />{" "}
+            <StatusPill status={order.paymentStatus} />
+          </h1>
           <p className="ad-h1-sub">
-            for <b>{order.recipientName || order.user?.name || "Guest"}</b>
-            {order.user?.email && <> · {order.user.email}</>}
+            Placed {when(order.createdAt)} ·{" "}
+            {order.user?.email || "guest checkout"}
           </p>
         </div>
-        <div className="ad-actions" style={{ gap: 6 }}>
-          <StatusPill status={order.status} />
-          <StatusPill status={order.paymentStatus} />
-        </div>
+        <OrderActions
+          orderId={order.id}
+          status={order.status}
+          paymentStatus={order.paymentStatus}
+        />
       </div>
 
-      <OrderActions
-        id={order.id} status={order.status}
-        paymentStatus={order.paymentStatus}
-      />
-
-      <div className="ad-detail-grid" style={{ marginTop: 16 }}>
+      <div className="ad-detail-grid">
         <div>
-          <div className="ad-card" style={{ marginBottom: 14 }}>
-            <div className="ad-card-head"><h3>Bouquet</h3></div>
-            {order.items.map((it: any) => (
-              <div key={it.id} style={{ display: "flex", gap: 14, padding: "14px 18px", borderBottom: "1px solid var(--ad-line-soft)" }}>
-                <div style={{
-                  width: 56, height: 72, borderRadius: 8,
-                  background: "var(--ad-bg-soft)", flexShrink: 0,
-                }} />
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontFamily: "var(--font-serif), serif", fontSize: 17, fontWeight: 500 }}>{it.productName}</div>
-                  <div style={{ fontSize: 12, color: "var(--ad-ink-mute)" }}>{it.variantLabel || "Standard"}</div>
-                </div>
-                <div style={{ fontFamily: "var(--font-mono), monospace", color: "var(--ad-ink-soft)" }}>×{it.qty}</div>
-                <div style={{ fontFamily: "var(--font-mono), monospace", fontWeight: 500, minWidth: 70, textAlign: "right" }}>{fmt(it.total)}</div>
+          <div className="ad-table-wrap" style={{ marginBottom: 14 }}>
+            <table className="ad-table">
+              <thead>
+                <tr>
+                  <th>Item</th>
+                  <th>Variant</th>
+                  <th style={{ textAlign: "right" }}>Qty</th>
+                  <th style={{ textAlign: "right" }}>Unit</th>
+                  <th style={{ textAlign: "right" }}>Total</th>
+                </tr>
+              </thead>
+              <tbody>
+                {order.items.map((it) => (
+                  <tr key={it.id} style={{ cursor: "default" }}>
+                    <td>
+                      {it.product?.slug ? (
+                        <Link href={`/${it.product.slug}`} style={{ fontWeight: 500 }}>
+                          {it.productName}
+                        </Link>
+                      ) : (
+                        <span style={{ fontWeight: 500 }}>{it.productName}</span>
+                      )}
+                    </td>
+                    <td>{it.variantLabel || "—"}</td>
+                    <td style={{ textAlign: "right" }}>{it.qty}</td>
+                    <td className="ad-table-money">{fmt(it.unitPrice)}</td>
+                    <td className="ad-table-money">{fmt(it.total)}</td>
+                  </tr>
+                ))}
+                <tr style={{ cursor: "default" }}>
+                  <td colSpan={4} style={{ textAlign: "right", color: "var(--ad-ink-mute)" }}>
+                    Subtotal
+                  </td>
+                  <td className="ad-table-money">{fmt(order.subtotal)}</td>
+                </tr>
+                <tr style={{ cursor: "default" }}>
+                  <td colSpan={4} style={{ textAlign: "right", color: "var(--ad-ink-mute)" }}>
+                    Delivery
+                  </td>
+                  <td className="ad-table-money">{fmt(order.deliveryFee)}</td>
+                </tr>
+                <tr style={{ cursor: "default" }}>
+                  <td colSpan={4} style={{ textAlign: "right", fontWeight: 600 }}>
+                    Total
+                  </td>
+                  <td className="ad-table-money" style={{ fontWeight: 600 }}>
+                    {fmt(order.total)}
+                  </td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div className="ad-form-section">
+            <h3>Timeline</h3>
+            <NoteForm orderId={order.id} />
+            <ul style={{ listStyle: "none", margin: "14px 0 0", padding: 0 }}>
+              {order.events.map((ev) => (
+                <li
+                  key={ev.id}
+                  style={{
+                    display: "flex",
+                    gap: 10,
+                    padding: "8px 0",
+                    borderBottom: "1px solid var(--ad-line-soft)",
+                    fontSize: 13,
+                  }}
+                >
+                  <span
+                    style={{
+                      fontFamily: "var(--font-mono), monospace",
+                      fontSize: 11,
+                      color: "var(--ad-ink-mute)",
+                      whiteSpace: "nowrap",
+                    }}
+                  >
+                    {when(ev.createdAt)}
+                  </span>
+                  <StatusPill status={ev.kind} />
+                  <span style={{ flex: 1 }}>{ev.message || ""}</span>
+                  <span style={{ color: "var(--ad-ink-mute)", fontSize: 11 }}>
+                    {ev.actor?.name || ev.actor?.email || "system"}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+
+        <div>
+          <div className="ad-form-section">
+            <h3>Delivery</h3>
+            <div style={{ fontSize: 13, lineHeight: 1.7 }}>
+              <div style={{ fontWeight: 500 }}>{order.recipientName || "—"}</div>
+              <div>{order.recipientPhone || ""}</div>
+              <div style={{ marginTop: 8 }}>
+                {order.addressLine1}
+                {order.addressLine2 ? <>, {order.addressLine2}</> : null}
               </div>
-            ))}
-            <div style={{ padding: "14px 18px", borderTop: "1px solid var(--ad-line)" }}>
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13 }}>
-                <span style={{ color: "var(--ad-ink-soft)" }}>Subtotal</span>
-                <span style={{ fontFamily: "var(--font-mono), monospace" }}>{fmt(order.subtotal)}</span>
+              <div>
+                {order.city} {order.zip || ""} · {order.country || ""}
               </div>
-              <div style={{ display: "flex", justifyContent: "space-between", fontSize: 13, marginTop: 4 }}>
-                <span style={{ color: "var(--ad-ink-soft)" }}>Delivery</span>
-                <span style={{ fontFamily: "var(--font-mono), monospace" }}>{fmt(order.deliveryFee)}</span>
+              <div style={{ marginTop: 8 }}>
+                <span
+                  style={{
+                    fontFamily: "var(--font-mono), monospace",
+                    fontSize: 11,
+                    padding: "2px 6px",
+                    borderRadius: 4,
+                    background: "var(--ad-bg-soft)",
+                  }}
+                >
+                  {order.deliveryWindow || "—"}
+                </span>
+                {order.deliveryDate && (
+                  <span style={{ marginLeft: 8, color: "var(--ad-ink-mute)" }}>
+                    {new Date(order.deliveryDate).toLocaleDateString("en-GB", {
+                      day: "2-digit",
+                      month: "short",
+                    })}
+                  </span>
+                )}
               </div>
-              <div style={{
-                display: "flex", justifyContent: "space-between",
-                paddingTop: 10, marginTop: 8, borderTop: "1px solid var(--ad-line)",
-                fontFamily: "var(--font-serif), serif", fontWeight: 500, fontSize: 22,
-              }}>
-                <span>Total</span>
-                <span style={{ fontFamily: "var(--font-mono), monospace", fontSize: 18 }}>{fmt(order.total)}</span>
+            </div>
+          </div>
+
+          <div className="ad-form-section">
+            <h3>Customer</h3>
+            <div style={{ fontSize: 13, lineHeight: 1.7 }}>
+              <div style={{ fontWeight: 500 }}>
+                {order.user?.name || "Guest"}
               </div>
+              <div>{order.user?.email || "no account"}</div>
+              <div>{order.user?.phone || ""}</div>
             </div>
           </div>
 
           {order.giftMessage && (
-            <div style={{
-              background: "linear-gradient(135deg, #fff8e8, #fdf2db)",
-              border: "1px solid #e8d5a8", borderRadius: 10,
-              padding: "14px 18px", marginBottom: 14,
-              fontFamily: "var(--font-serif), serif", fontSize: 17, fontStyle: "italic",
-            }}>
-              "{order.giftMessage}"
+            <div className="ad-form-section">
+              <h3>Gift message</h3>
+              <p style={{ fontSize: 13, fontStyle: "italic", margin: 0 }}>
+                “{order.giftMessage}”
+              </p>
             </div>
           )}
-
-          <div className="ad-card">
-            <div className="ad-card-head"><h3>Timeline</h3></div>
-            <div>
-              {order.events.map((e: any) => (
-                <div key={e.id} style={{
-                  display: "flex", gap: 14, padding: "12px 18px",
-                  borderBottom: "1px solid var(--ad-line-soft)",
-                }}>
-                  <div style={{ width: 8 }}>
-                    <span style={{
-                      display: "block", width: 8, height: 8, borderRadius: "50%",
-                      background: "var(--ad-sage)", marginTop: 6,
-                    }}/>
-                  </div>
-                  <div style={{ flex: 1, fontSize: 13 }}>
-                    <div><b>{e.kind}</b>{e.message && <> — <span style={{ color: "var(--ad-ink-soft)" }}>{e.message}</span></>}</div>
-                    <div style={{ fontFamily: "var(--font-mono), monospace", fontSize: 11, color: "var(--ad-ink-mute)", marginTop: 2 }}>
-                      {new Date(e.createdAt).toLocaleString()}
-                      {e.actor && ` · ${e.actor.name || e.actor.email}`}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        <div style={{ display: "flex", flexDirection: "column", gap: 14 }}>
-          <div className="ad-info">
-            <div className="ad-info-head"><h4>Delivery</h4></div>
-            <div className="ad-info-body">
-              <div className="ad-info-row"><span>Recipient</span><span>{order.recipientName || "—"}</span></div>
-              <div className="ad-info-row"><span>Phone</span><span>{order.recipientPhone || "—"}</span></div>
-              <div className="ad-info-row"><span>Address</span><span style={{ maxWidth: 200, textAlign: "right" }}>{order.addressLine1}{order.addressLine2 && <><br/>{order.addressLine2}</>}<br/>{order.city}{order.zip && ` · ${order.zip}`}</span></div>
-              <div className="ad-info-row"><span>Window</span><span>{order.deliveryWindow}</span></div>
-            </div>
-          </div>
-
-          <div className="ad-info">
-            <div className="ad-info-head"><h4>Customer</h4></div>
-            <div className="ad-info-body">
-              <div className="ad-info-row"><span>Name</span><span>{order.user?.name || "Guest"}</span></div>
-              <div className="ad-info-row"><span>Email</span><span>{order.user?.email || "—"}</span></div>
-              <div className="ad-info-row"><span>Phone</span><span>{order.user?.phone || order.recipientPhone || "—"}</span></div>
-            </div>
-          </div>
-
-          <div className="ad-info">
-            <div className="ad-info-head"><h4>Payment</h4></div>
-            <div className="ad-info-body">
-              <div className="ad-info-row"><span>Status</span><span><StatusPill status={order.paymentStatus} /></span></div>
-              <div className="ad-info-row"><span>Captured</span><span style={{ fontFamily: "var(--font-mono), monospace" }}>{order.paymentStatus === "PAID" ? fmt(order.total) : "—"}</span></div>
-              <div className="ad-info-row"><span>Ref</span><span style={{ fontFamily: "var(--font-mono), monospace", fontSize: 11 }}>{order.paymentRef || "mock"}</span></div>
-            </div>
-          </div>
         </div>
       </div>
     </div>

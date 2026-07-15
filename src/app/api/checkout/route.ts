@@ -1,8 +1,9 @@
 import { z } from "zod";
 import { prisma } from "../../../lib/prisma";
 import { auth } from "../../../lib/auth";
-import { json, route, bad, readBody } from "../../../lib/api";
+import { json, route, bad, readBody, HttpError } from "../../../lib/api";
 import { getOrCreateCart, priceCart } from "../../../lib/cart";
+import { enforceRateLimit } from "../../../lib/rate-limit";
 import { cookies } from "next/headers";
 
 const schema = z.object({
@@ -45,6 +46,9 @@ async function uniqueCode(): Promise<string> {
  * Payment is mocked: the order goes in as PENDING and the admin marks it PAID.
  */
 export const POST = route(async (req: Request) => {
+  // Throttle checkout to curb order flooding / card-testing-style abuse.
+  await enforceRateLimit(req, "checkout", { limit: 10, windowSec: 60 });
+
   const data = await readBody(req, schema);
   const cart = await getOrCreateCart();
   const priced = await priceCart(cart.id);
@@ -63,44 +67,71 @@ export const POST = route(async (req: Request) => {
   }
 
   const code = await uniqueCode();
-  const order = await prisma.order.create({
-    data: {
-      code,
-      userId,
-      subtotal: priced.subtotal,
-      deliveryFee: priced.deliveryFee,
-      total: priced.total,
-      currency: priced.currency,
-      recipientName: data.recipientName,
-      recipientPhone: data.recipientPhone,
-      addressLine1: data.addressLine1,
-      addressLine2: data.addressLine2,
-      city: data.city,
-      zip: data.zip,
-      country: data.country,
-      deliveryWindow: data.deliveryWindow,
-      deliveryDate: data.deliveryDate ? new Date(data.deliveryDate) : null,
-      giftMessage: data.giftMessage,
-      items: {
-        create: priced.lines.map((l) => ({
-          productId: l.productId!,
-          variantId: l.variantId || null,
-          productName: l.productName,
-          variantLabel: l.variantLabel,
-          unitPrice: l.unitPrice,
-          qty: l.qty,
-          total: l.total,
-        })),
+
+  // Everything below is atomic: stock is decremented, the order is created, and
+  // the cart is emptied as one unit. If stock runs out mid-flight the whole
+  // transaction rolls back and nothing is persisted.
+  const order = await prisma.$transaction(async (tx) => {
+    // ── Decrement stock with an atomic guard ──────────────────────────────
+    // Only variant lines track stock (stockQty lives on ProductVariant). The
+    // `stockQty: { gte: qty }` filter makes the check-and-decrement a single
+    // race-free statement: if another concurrent checkout already took the
+    // last units, updateMany affects 0 rows and we abort.
+    for (const l of priced.lines) {
+      if (!l.variantId) continue; // no variant → no tracked inventory
+      const res = await tx.productVariant.updateMany({
+        where: { id: l.variantId, stockQty: { gte: l.qty } },
+        data: { stockQty: { decrement: l.qty } },
+      });
+      if (res.count === 0) {
+        throw new HttpError(`"${l.productName}" is out of stock`, 409);
+      }
+    }
+
+    const created = await tx.order.create({
+      data: {
+        code,
+        userId,
+        subtotal: priced.subtotal,
+        deliveryFee: priced.deliveryFee,
+        total: priced.total,
+        currency: priced.currency,
+        recipientName: data.recipientName,
+        recipientPhone: data.recipientPhone,
+        addressLine1: data.addressLine1,
+        addressLine2: data.addressLine2,
+        city: data.city,
+        zip: data.zip,
+        country: data.country,
+        deliveryWindow: data.deliveryWindow,
+        deliveryDate: data.deliveryDate ? new Date(data.deliveryDate) : null,
+        giftMessage: data.giftMessage,
+        items: {
+          create: priced.lines.map((l) => ({
+            productId: l.productId!,
+            variantId: l.variantId || null,
+            productName: l.productName,
+            variantLabel: l.variantLabel,
+            unitPrice: l.unitPrice,
+            qty: l.qty,
+            total: l.total,
+          })),
+        },
+        events: {
+          create: [{ kind: "PLACED", message: "Order placed via storefront." }],
+        },
       },
-      events: {
-        create: [{ kind: "PLACED", message: "Order placed via storefront." }],
-      },
-    },
-    include: { items: true },
+      include: { items: true },
+    });
+
+    // Clear the cart items inside the transaction so a successful order always
+    // leaves an empty cart (and a failed one leaves the cart intact for retry).
+    await tx.cartItem.deleteMany({ where: { cartId: cart.id } });
+
+    return created;
   });
 
-  // Clear the cart (drop items + token cookie if anon).
-  await prisma.cartItem.deleteMany({ where: { cartId: cart.id } });
+  // Cookie mutation must happen outside the DB transaction.
   if (!session) {
     const store = await cookies();
     store.delete("fs_cart");

@@ -1,6 +1,7 @@
 import { prisma } from "../../../lib/prisma";
 import { auth } from "../../../lib/auth";
 import { json, route, bad, readPaging } from "../../../lib/api";
+import { serializeOrder } from "../../../lib/serializers";
 
 /**
  * GET /api/orders — list the signed-in user's orders.
@@ -42,21 +43,3 @@ export const GET = route(async (req: Request) => {
   });
 });
 
-export function serializeOrder(o: any) {
-  return {
-    id: o.id, code: o.code, status: o.status, paymentStatus: o.paymentStatus,
-    subtotal: o.subtotal, deliveryFee: o.deliveryFee, total: o.total, currency: o.currency,
-    deliveryWindow: o.deliveryWindow, deliveryDate: o.deliveryDate,
-    recipientName: o.recipientName, recipientPhone: o.recipientPhone,
-    addressLine1: o.addressLine1, addressLine2: o.addressLine2, city: o.city, zip: o.zip, country: o.country,
-    giftMessage: o.giftMessage,
-    items: (o.items || []).map((it: any) => ({
-      id: it.id, productId: it.productId, productName: it.productName,
-      variantLabel: it.variantLabel, qty: it.qty, unitPrice: it.unitPrice, total: it.total,
-    })),
-    events: (o.events || []).map((e: any) => ({
-      kind: e.kind, message: e.message, createdAt: e.createdAt,
-    })),
-    createdAt: o.createdAt,
-  };
-}

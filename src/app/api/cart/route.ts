@@ -2,6 +2,7 @@ import { z } from "zod";
 import { prisma } from "../../../lib/prisma";
 import { json, route, bad, readBody } from "../../../lib/api";
 import { getOrCreateCart, priceCart } from "../../../lib/cart";
+import { enforceRateLimit } from "../../../lib/rate-limit";
 
 /** GET /api/cart — current cart with line totals. */
 export const GET = route(async () => {
@@ -20,6 +21,8 @@ const addSchema = z.object({
 
 /** POST /api/cart — add a line item. */
 export const POST = route(async (req: Request) => {
+  await enforceRateLimit(req, "cart-add", { limit: 60, windowSec: 60 });
+
   const data = await readBody(req, addSchema);
   const cart = await getOrCreateCart();
 

@@ -1,23 +1,26 @@
 import { z } from "zod";
-import { json, route, readBody } from "../../../lib/api";
-import { requireStaff } from "../../../lib/auth-helpers";
-import { createSignedUploadUrl } from "../../../lib/upload";
+import { json, route, readBody } from "../../../../lib/api";
+import { requireStaff } from "../../../../lib/auth-helpers";
+import { createSignedUploadUrl } from "../../../../lib/upload";
 
 const schema = z.object({
-  contentType: z.string().regex(/^image\/(png|jpe?g|webp|gif)$/, "Only images allowed"),
-  prefix: z.string().regex(/^[a-z0-9\-\/]+$/i).optional(),
+  contentType: z.string().regex(/^image\/(png|jpe?g|webp|avif|gif)$/i, "Images only"),
+  prefix: z
+    .string()
+    .regex(/^[a-z0-9/_-]{1,60}$/i, "Invalid prefix")
+    .optional(),
 });
 
 /**
- * POST /api/admin/upload-url
- * → { uploadUrl, publicUrl }
- *
- * Browser PUTs the file directly to uploadUrl with the same content-type;
- * publicUrl is what to store on the product record.
+ * POST /api/admin/upload-url — signed S3 PUT URL for product photography.
+ * The browser PUTs the file straight to storage; only publicUrl is persisted.
  */
 export const POST = route(async (req: Request) => {
   await requireStaff();
-  const { contentType, prefix } = await readBody(req, schema);
-  const out = await createSignedUploadUrl({ contentType, prefix: prefix || "products" });
-  return json(out);
+  const data = await readBody(req, schema);
+  const result = await createSignedUploadUrl({
+    contentType: data.contentType,
+    prefix: data.prefix || "products",
+  });
+  return json(result);
 });

@@ -43,7 +43,7 @@ export default function AdminSidebar({ user }: { user: Session["user"] }) {
       <nav className="ad-nav">
         {items.map((it, i) => {
           if ("section" in it) return <div key={i} className="ad-nav-section">{it.section}</div>;
-          if (it.ownerOnly && user.role !== "OWNER") return null;
+          if ("ownerOnly" in it && it.ownerOnly && user.role !== "OWNER") return null;
           return (
             <Link key={it.href} href={it.href} className={"ad-nav-item" + (isActive(it.href) ? " ad-nav-item--on" : "")}>
               {ICONS[it.icon]}

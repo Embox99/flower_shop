@@ -1,71 +1,138 @@
 "use client";
-import React, { useState, useTransition } from "react";
+/**
+ * Order controls: advance the fulfilment status, mark payment, cancel, add notes.
+ * All mutations go through PATCH /api/admin/orders/[id], then refresh the RSC tree.
+ */
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 
-const flow = ["NEW", "TYING", "READY", "OUT_FOR_DELIVERY", "DELIVERED"];
+const NEXT_STEP: Record<string, { to: string; label: string }> = {
+  NEW: { to: "TYING", label: "Start tying" },
+  TYING: { to: "READY", label: "Mark ready" },
+  READY: { to: "OUT_FOR_DELIVERY", label: "Send out" },
+  OUT_FOR_DELIVERY: { to: "DELIVERED", label: "Mark delivered" },
+};
+
+function usePatch(orderId: string) {
+  const router = useRouter();
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  async function patch(body: Record<string, unknown>) {
+    setBusy(true);
+    setError(null);
+    try {
+      const res = await fetch(`/api/admin/orders/${orderId}`, {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error || `HTTP ${res.status}`);
+      }
+      router.refresh();
+      return true;
+    } catch (e: any) {
+      setError(e.message);
+      return false;
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return { patch, busy, error };
+}
 
 export default function OrderActions({
-  id, status, paymentStatus,
+  orderId,
+  status,
+  paymentStatus,
 }: {
-  id: string;
+  orderId: string;
   status: string;
   paymentStatus: string;
 }) {
-  const router = useRouter();
-  const [pending, start] = useTransition();
-  const [note, setNote] = useState("");
-  const [busy, setBusy] = useState(false);
-
-  const patch = async (body: any) => {
-    setBusy(true);
-    const res = await fetch(`/api/admin/orders/${id}`, {
-      method: "PATCH",
-      headers: { "content-type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    setBusy(false);
-    if (!res.ok) {
-      const e = await res.json().catch(() => ({}));
-      alert(e.error || "Could not update");
-      return;
-    }
-    start(() => router.refresh());
-  };
-
-  const nextIdx = flow.indexOf(status);
-  const nextStatus = nextIdx >= 0 && nextIdx < flow.length - 1 ? flow[nextIdx + 1] : null;
+  const { patch, busy, error } = usePatch(orderId);
+  const next = NEXT_STEP[status];
+  const open = status !== "DELIVERED" && status !== "CANCELED";
 
   return (
-    <div className="ad-card" style={{ padding: "12px 18px", display: "flex", gap: 8, alignItems: "center", flexWrap: "wrap" }}>
-      {nextStatus && (
-        <button className="ad-btn ad-btn--dark" disabled={busy || pending} onClick={() => patch({ status: nextStatus })}>
-          → Move to {nextStatus.replace(/_/g, " ").toLowerCase()}
+    <div className="ad-actions">
+      {error && (
+        <span style={{ color: "var(--ad-warn)", fontSize: 12 }}>{error}</span>
+      )}
+      {paymentStatus === "PENDING" && (
+        <button
+          className="ad-btn"
+          disabled={busy}
+          onClick={() => patch({ paymentStatus: "PAID" })}
+        >
+          Mark paid
         </button>
       )}
-      {paymentStatus !== "PAID" && (
-        <button className="ad-btn" disabled={busy || pending} onClick={() => patch({ paymentStatus: "PAID" })}>
-          Mark as paid
+      {paymentStatus === "PAID" && status === "CANCELED" && (
+        <button
+          className="ad-btn"
+          disabled={busy}
+          onClick={() => patch({ paymentStatus: "REFUNDED" })}
+        >
+          Refund
         </button>
       )}
-      {paymentStatus === "PAID" && status !== "DELIVERED" && (
-        <button className="ad-btn ad-btn--danger" disabled={busy || pending}
-          onClick={() => { if (confirm("Refund and cancel this order?")) patch({ status: "CANCELED", paymentStatus: "REFUNDED" }); }}>
-          Refund & cancel
+      {open && next && (
+        <button
+          className="ad-btn ad-btn--dark"
+          disabled={busy}
+          onClick={() => patch({ status: next.to })}
+        >
+          {next.label}
         </button>
       )}
-      <div style={{ flex: 1, display: "flex", gap: 6 }}>
-        <input
-          className="ad-input"
-          placeholder="Add an internal note…"
-          value={note}
-          onChange={(e) => setNote(e.target.value)}
-          style={{ flex: 1 }}
-        />
-        <button className="ad-btn ad-btn--sm" disabled={!note || busy || pending}
-          onClick={() => { patch({ note }); setNote(""); }}>
-          Post
+      {open && (
+        <button
+          className="ad-btn ad-btn--danger"
+          disabled={busy}
+          onClick={() => {
+            if (confirm("Cancel this order? Tracked stock goes back on the shelf.")) {
+              patch({ status: "CANCELED" });
+            }
+          }}
+        >
+          Cancel order
         </button>
-      </div>
+      )}
     </div>
+  );
+}
+
+export function NoteForm({ orderId }: { orderId: string }) {
+  const { patch, busy, error } = usePatch(orderId);
+  const [note, setNote] = useState("");
+
+  return (
+    <form
+      onSubmit={async (e) => {
+        e.preventDefault();
+        if (!note.trim()) return;
+        if (await patch({ note: note.trim() })) setNote("");
+      }}
+      style={{ display: "flex", gap: 8, alignItems: "flex-start" }}
+    >
+      <input
+        className="ad-input"
+        style={{ flex: 1 }}
+        placeholder="Internal note — visible to staff only"
+        value={note}
+        maxLength={500}
+        onChange={(e) => setNote(e.target.value)}
+      />
+      <button className="ad-btn ad-btn--sm" disabled={busy || !note.trim()}>
+        Add note
+      </button>
+      {error && (
+        <span style={{ color: "var(--ad-warn)", fontSize: 12 }}>{error}</span>
+      )}
+    </form>
   );
 }
