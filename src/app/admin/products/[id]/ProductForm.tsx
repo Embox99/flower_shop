@@ -3,6 +3,7 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import StatusPill from "../../../../components/admin/StatusPill";
 import VariantsEditor from "./VariantsEditor";
+import ImagesEditor from "./ImagesEditor";
 
 type Category = { id: string; name: string; slug: string };
 type Product = any;
@@ -139,6 +140,13 @@ export default function ProductForm({ product, categories }: { product?: Product
               </div>
             </div>
           </div>
+
+          {!isNew && (
+            <div className="ad-form-section">
+              <h3>Photos</h3>
+              <ImagesEditor productId={product.id} images={product.images} />
+            </div>
+          )}
         </div>
 
         <div>
