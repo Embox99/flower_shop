@@ -10,7 +10,7 @@ import BouquetIllustration from "../../components/BouquetIllustration";
 const ListPage = async ({
   searchParams,
 }: {
-  searchParams: Promise<{ cat?: string; sort?: string; max?: string; page?: string }>;
+  searchParams: Promise<{ cat?: string; sort?: string; max?: string; page?: string; q?: string }>;
 }) => {
   const sp = await searchParams;
   const catSlug = sp.cat;
@@ -30,9 +30,9 @@ const ListPage = async ({
         style={{ background: `linear-gradient(120deg, ${hue}, #efe2c7)` }}
       >
         <div className="fs-list-banner-text">
-          <span className="fs-section-eyebrow">{catSlug ? "Category" : "Shop"}</span>
-          <h1 className="fs-list-title">{cat?.name || "Everything in flower"}</h1>
-          <p>{cat?.subtitle || "Hand-tied this morning. Delivered this afternoon."}</p>
+          <span className="fs-section-eyebrow">{sp.q ? "Search" : catSlug ? "Category" : "Shop"}</span>
+          <h1 className="fs-list-title">{sp.q ? `“${sp.q}”` : cat?.name || "Everything in flower"}</h1>
+          <p>{sp.q ? "Here's what we found." : cat?.subtitle || "Hand-tied this morning. Delivered this afternoon."}</p>
           <div className="fs-list-crumbs">
             <Link href="/">Home</Link>
             <span>›</span>
