@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import StatusPill from "../../../../components/admin/StatusPill";
+import VariantsEditor from "./VariantsEditor";
 
 type Category = { id: string; name: string; slug: string };
 type Product = any;
@@ -176,25 +177,7 @@ export default function ProductForm({ product, categories }: { product?: Product
           {product?.variants?.length > 0 && (
             <div className="ad-form-section">
               <h3>Variants ({product.variants.length})</h3>
-              <table className="ad-table" style={{ fontSize: 12 }}>
-                <thead><tr><th>Label</th><th>SKU</th><th>Stems</th><th>Δ price</th><th>Stock</th></tr></thead>
-                <tbody>
-                  {product.variants.map((v: any) => (
-                    <tr key={v.id}>
-                      <td>{v.label}</td>
-                      <td><span className="ad-table-id">{v.sku}</span></td>
-                      <td>{v.stems || "—"}</td>
-                      <td style={{ fontFamily: "var(--font-mono), monospace" }}>
-                        {v.priceDelta === 0 ? "—" : v.priceDelta > 0 ? `+$${(v.priceDelta/100).toFixed(0)}` : `−$${(-v.priceDelta/100).toFixed(0)}`}
-                      </td>
-                      <td style={{ fontFamily: "var(--font-mono), monospace" }}>{v.stockQty}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-              <p style={{ fontSize: 11, color: "var(--ad-ink-mute)", marginTop: 8 }}>
-                Per-variant editing UI to be wired in the next pass.
-              </p>
+              <VariantsEditor productId={product.id} variants={product.variants} />
             </div>
           )}
         </div>
