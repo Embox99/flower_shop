@@ -1242,7 +1242,7 @@
 .fs-foot-cols a:hover { opacity: 1; border-bottom: 1px solid currentColor; padding-bottom: 1px; }
 .fs-foot-news h4 { font-family: var(--fs-mono); font-size: 11px; letter-spacing: 0.18em; text-transform: uppercase; color: rgba(255,255,255,0.6); margin: 0 0 14px; font-weight: 400; }
 .fs-foot-news p { font-size: 14px; line-height: 1.5; margin: 0 0 14px; opacity: 0.85; }
-.fs-foot-form { display: flex; gap: 8px; }
+.fs-foot-form { display: flex; flex-wrap: wrap; gap: 8px; }
 .fs-foot-form input {
   flex: 1; border: 1px solid rgba(255,255,255,0.25); background: transparent;
   padding: 10px 14px; border-radius: 999px;
@@ -1250,6 +1250,9 @@
 }
 .fs-foot-form input::placeholder { color: rgba(255,255,255,0.5); }
 .fs-foot-form button { padding: 10px 18px; border-radius: 999px; background: var(--fs-bg); color: var(--fs-ink); border: none; font: inherit; font-weight: 500; }
+.fs-foot-form button:disabled { opacity: 0.6; }
+.fs-foot-form-error { flex-basis: 100%; font-size: 12px; color: #e8a898; margin-top: 6px; }
+.fs-foot-form-done { font-size: 14px; color: var(--fs-bg); opacity: 0.9; margin: 0 0 14px; }
 .fs-foot-pay { display: flex; gap: 8px; margin-top: 16px; }
 .fs-foot-pay span {
   font-family: var(--fs-mono); font-size: 10px;

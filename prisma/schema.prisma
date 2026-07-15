@@ -446,3 +446,11 @@ model Setting {
   value     Json
   updatedAt DateTime @updatedAt
 }
+
+// ─────────────────────────── MARKETING (footer newsletter signup) ───────────────────────────
+
+model NewsletterSubscriber {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  createdAt DateTime @default(now())
+}

@@ -1,6 +1,7 @@
 import React from "react";
 import Link from "next/link";
 import FlowerShopMark from "./FlowerShopMark";
+import NewsletterForm from "./NewsletterForm";
 
 export default function Footer() {
   return (
@@ -58,10 +59,7 @@ export default function Footer() {
           <p>
             One short note a month — what&apos;s blooming, what&apos;s worth driving across town for.
           </p>
-          <form className="fs-foot-form" action="#">
-            <input type="email" placeholder="you@flowerlover.com" />
-            <button type="submit">Subscribe</button>
-          </form>
+          <NewsletterForm />
           <div className="fs-foot-pay">
             <span>visa</span>
             <span>mc</span>
