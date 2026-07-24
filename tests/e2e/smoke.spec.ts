@@ -7,10 +7,10 @@ import { test, expect } from "@playwright/test";
 test("storefront loads and navigates", async ({ page }) => {
   await page.goto("/");
   await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
-  await expect(page.getByText("Flower Shop")).toBeVisible();
+  await expect(page.getByRole("link", { name: "Flower Shop" }).first()).toBeVisible();
 
-  // Click any category card / "Shop today's flowers"
-  const shopLink = page.getByRole("link", { name: /shop|today/i }).first();
+  // Click the hero CTA into the catalogue.
+  const shopLink = page.getByRole("link", { name: /today's flowers/i });
   await shopLink.click();
   await expect(page).toHaveURL(/\/list/);
 });
