@@ -88,6 +88,15 @@ export const POST = route(async (req: Request) => {
       }
     }
 
+    // Keep the per-product sales tally current so "bestseller" sorting works.
+    for (const l of priced.lines) {
+      if (!l.productId) continue;
+      await tx.product.update({
+        where: { id: l.productId },
+        data: { totalSold: { increment: l.qty } },
+      });
+    }
+
     const created = await tx.order.create({
       data: {
         code,
