@@ -61,7 +61,7 @@ v1 was a redesign on top of **Wix Headless**. v2 brings the backend home:
 ### 1. Install
 ```bash
 git clone <repo>
-cd next-app
+cd flower-shop
 npm install
 ```
 
@@ -82,10 +82,9 @@ This brings up four containers:
 ```bash
 cp .env.example .env.local
 cp .env.example .env
-#Ill fix this later
 
-# generate a real secret:
-openssl rand -base64 32 | xargs -I {} sed -i '' "s|replace-me-with-a-long-random-string|{}|" .env.local
+# generate a secret and paste it into NEXTAUTH_SECRET in .env.local:
+openssl rand -base64 32
 ```
 
 ### 4. Schema + seed
