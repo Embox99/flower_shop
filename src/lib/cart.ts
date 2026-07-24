@@ -108,6 +108,19 @@ export async function mergeAnonCartIntoUserCart(userId: string) {
 }
 
 /**
+ * Delivery pricing, read from the owner-editable `shop.delivery` setting.
+ * Falls back to a flat $6 fee if unset.
+ */
+async function deliveryConfig() {
+  const row = await prisma.setting.findUnique({ where: { key: "shop.delivery" } });
+  const v = (row?.value as any) || {};
+  return {
+    feeCents: typeof v.feeCents === "number" ? v.feeCents : 600,
+    freeOverCents: typeof v.freeOverCents === "number" ? v.freeOverCents : null,
+  };
+}
+
+/**
  * Compute totals from a cart's line items. Single source of pricing truth — never
  * trust the client.
  */
@@ -139,7 +152,10 @@ export async function priceCart(cartId: string) {
       giftMessage: it.giftMessage,
     };
   });
-  const deliveryFee = subtotal > 0 ? 600 : 0;
+  const cfg = await deliveryConfig();
+  let deliveryFee = subtotal > 0 ? cfg.feeCents : 0;
+  // Free delivery once the basket clears the configured threshold.
+  if (cfg.freeOverCents != null && subtotal >= cfg.freeOverCents) deliveryFee = 0;
   const total = subtotal + deliveryFee;
   return { lines, subtotal, deliveryFee, total, currency: "USD" };
 }

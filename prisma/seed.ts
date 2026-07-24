@@ -235,6 +235,7 @@ async function main() {
         lastSlot: "18:00",
         windows: ["9 – 12", "12 – 3", "3 – 6", "Pick up"],
         feeCents: 600,
+        freeOverCents: 5000,
       } as any,
     },
   });

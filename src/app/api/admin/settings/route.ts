@@ -19,6 +19,7 @@ const deliverySchema = z.object({
   lastSlot: z.string().max(5),
   windows: z.array(z.string().min(1).max(40)).max(12),
   feeCents: z.number().int().min(0).max(1_000_000).optional(),
+  freeOverCents: z.number().int().min(0).max(10_000_000).optional(),
 });
 
 const patchSchema = z

@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 
 type Day = { open?: string; close?: string; on: boolean };
 type Hours = Record<string, Day>;
-type Delivery = { sameDayCutoff: string; lastSlot: string; windows: string[]; feeCents?: number };
+type Delivery = { sameDayCutoff: string; lastSlot: string; windows: string[]; feeCents?: number; freeOverCents?: number };
 
 const DAYS = ["mon", "tue", "wed", "thu", "fri", "sat", "sun"];
 
@@ -28,6 +28,7 @@ export default function SettingsForm({
     lastSlot: initialDelivery.lastSlot || "18:00",
     windows: initialDelivery.windows || [],
     feeCents: initialDelivery.feeCents,
+    freeOverCents: initialDelivery.freeOverCents,
   });
   const [newWindow, setNewWindow] = useState("");
   const [busy, setBusy] = useState(false);
@@ -115,18 +116,33 @@ export default function SettingsForm({
           </div>
         </div>
 
-        <div className="ad-form-row" style={{ marginTop: 14 }}>
-          <label>Delivery fee (cents)</label>
-          <input
-            className="ad-input"
-            type="number"
-            min={0}
-            value={delivery.feeCents ?? ""}
-            placeholder="600"
-            onChange={(e) =>
-              setDelivery((d) => ({ ...d, feeCents: e.target.value === "" ? undefined : Number(e.target.value) }))
-            }
-          />
+        <div className="ad-form-row-2" style={{ marginTop: 14 }}>
+          <div className="ad-form-row" style={{ marginBottom: 0 }}>
+            <label>Delivery fee (cents)</label>
+            <input
+              className="ad-input"
+              type="number"
+              min={0}
+              value={delivery.feeCents ?? ""}
+              placeholder="600"
+              onChange={(e) =>
+                setDelivery((d) => ({ ...d, feeCents: e.target.value === "" ? undefined : Number(e.target.value) }))
+              }
+            />
+          </div>
+          <div className="ad-form-row" style={{ marginBottom: 0 }}>
+            <label>Free over (cents)</label>
+            <input
+              className="ad-input"
+              type="number"
+              min={0}
+              value={delivery.freeOverCents ?? ""}
+              placeholder="5000"
+              onChange={(e) =>
+                setDelivery((d) => ({ ...d, freeOverCents: e.target.value === "" ? undefined : Number(e.target.value) }))
+              }
+            />
+          </div>
         </div>
 
         <div className="ad-form-row" style={{ marginTop: 14 }}>
