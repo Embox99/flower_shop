@@ -62,6 +62,7 @@ export default function ListToolbar({
           Sort
           <select value={sort} onChange={(e) => setSort(e.target.value)}>
             <option value="">Featured</option>
+            <option value="bestseller">Bestselling</option>
             <option value="newest">Newest</option>
             <option value="price-asc">Price · low</option>
             <option value="price-desc">Price · high</option>
