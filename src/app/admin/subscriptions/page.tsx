@@ -1,6 +1,6 @@
-import Link from "next/link";
 import { prisma } from "../../../lib/prisma";
 import StatusPill from "../../../components/admin/StatusPill";
+import SubscriptionActions from "./SubscriptionActions";
 
 const fmt = (cents: number) => `$${(cents / 100).toFixed(0)}`;
 const cadenceLabel: Record<string, string> = { WEEKLY: "Weekly", FORTNIGHTLY: "Fortnightly", MONTHLY: "Monthly" };
@@ -29,10 +29,11 @@ export default async function AdminSubscriptions() {
             <th>ID</th><th>Customer</th><th>Plan</th>
             <th>Next delivery</th><th>Delivered</th>
             <th style={{ textAlign: "right" }}>Value</th><th>Status</th>
+            <th style={{ textAlign: "right" }}>Actions</th>
           </tr></thead>
           <tbody>
             {subs.length === 0 ? (
-              <tr><td colSpan={7} style={{ padding: 32, textAlign: "center", color: "var(--ad-ink-mute)" }}>No subscriptions yet.</td></tr>
+              <tr><td colSpan={8} style={{ padding: 32, textAlign: "center", color: "var(--ad-ink-mute)" }}>No subscriptions yet.</td></tr>
             ) : subs.map((s: any) => (
               <tr key={s.id}>
                 <td><span className="ad-table-id">{s.id.slice(0, 8)}</span></td>
@@ -44,6 +45,7 @@ export default async function AdminSubscriptions() {
                 <td style={{ fontFamily: "var(--font-mono), monospace" }}>{s.deliveredCount}{s.totalCycles ? ` / ${s.totalCycles}` : ""}</td>
                 <td className="ad-table-money">{fmt(s.value)}/cycle</td>
                 <td><StatusPill status={s.status} /></td>
+                <td><SubscriptionActions id={s.id} status={s.status} /></td>
               </tr>
             ))}
           </tbody>
