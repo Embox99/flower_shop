@@ -1,11 +1,17 @@
 import { z } from "zod";
 import { prisma } from "../../../lib/prisma";
 import { json, route, bad, readBody } from "../../../lib/api";
-import { getOrCreateCart, priceCart } from "../../../lib/cart";
+import { getOrCreateCart, priceCart, mergeAnonCartIntoUserCart } from "../../../lib/cart";
 import { enforceRateLimit } from "../../../lib/rate-limit";
+import { auth } from "../../../lib/auth";
 
 /** GET /api/cart — current cart with line totals. */
 export const GET = route(async () => {
+  // On the first authenticated load, fold any anonymous cookie cart into the
+  // user's cart so items added before signing in aren't lost.
+  const session = await auth();
+  if (session?.user?.id) await mergeAnonCartIntoUserCart(session.user.id);
+
   const cart = await getOrCreateCart();
   const priced = await priceCart(cart.id);
   return json({ cartId: cart.id, ...priced });

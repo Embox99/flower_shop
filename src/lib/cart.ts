@@ -62,27 +62,47 @@ export async function mergeAnonCartIntoUserCart(userId: string) {
   const store = await cookies();
   const token = store.get(CART_COOKIE)?.value;
   if (!token) return;
-  const anon = await prisma.cart.findUnique({ where: { token }, include: { items: true } });
-  if (!anon || anon.items.length === 0) return;
 
-  const userCart = await prisma.cart.upsert({
-    where: { id: anon.userId === userId ? anon.id : "__never__" },
-    update: {},
-    create: { userId },
-  });
+  const anon = await prisma.cart.findUnique({ where: { token }, include: { items: true } });
+  // Stale cookie pointing at nothing — drop it so it doesn't linger.
+  if (!anon) { store.delete(CART_COOKIE); return; }
+  // Already the user's own cart; just retire the anon cookie.
+  if (anon.userId === userId) { store.delete(CART_COOKIE); return; }
+
+  // Destination: the user's existing cart, or a fresh one.
+  const userCart =
+    (await prisma.cart.findFirst({ where: { userId }, orderBy: { updatedAt: "desc" } })) ??
+    (await prisma.cart.create({ data: { userId } }));
 
   for (const item of anon.items) {
-    await prisma.cartItem.create({
-      data: {
+    // Fold matching lines together instead of duplicating them.
+    const existing = await prisma.cartItem.findFirst({
+      where: {
         cartId: userCart.id,
         productId: item.productId,
         variantId: item.variantId,
-        qty: item.qty,
         addVase: item.addVase,
-        giftMessage: item.giftMessage,
       },
     });
+    if (existing) {
+      await prisma.cartItem.update({
+        where: { id: existing.id },
+        data: { qty: existing.qty + item.qty },
+      });
+    } else {
+      await prisma.cartItem.create({
+        data: {
+          cartId: userCart.id,
+          productId: item.productId,
+          variantId: item.variantId,
+          qty: item.qty,
+          addVase: item.addVase,
+          giftMessage: item.giftMessage,
+        },
+      });
+    }
   }
+
   await prisma.cart.delete({ where: { id: anon.id } });
   store.delete(CART_COOKIE);
 }
