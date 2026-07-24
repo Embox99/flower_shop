@@ -1,3 +1,4 @@
+import React from "react";
 import { prisma } from "../../../lib/prisma";
 import { requireOwner } from "../../../lib/auth-helpers";
 
@@ -62,5 +63,3 @@ export default async function AdminSettings() {
     </div>
   );
 }
-
-import React from "react";

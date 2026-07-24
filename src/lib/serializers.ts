@@ -5,6 +5,11 @@
 
 /** Public product shape used by the storefront. Hides cost, internal notes etc. */
 export function toPublicProduct(p: any) {
+  // Prefer live variant stock when it's loaded; fall back to the aggregate.
+  const variantStock = Array.isArray(p.variants)
+    ? p.variants.reduce((sum: number, v: any) => sum + (v.stockQty ?? 0), 0)
+    : null;
+  const stock = variantStock ?? p.totalStock ?? 0;
   return {
     id: p.id,
     slug: p.slug,
@@ -22,7 +27,7 @@ export function toPublicProduct(p: any) {
     category: p.category ? { slug: p.category.slug, name: p.category.name } : null,
     images: (p.images || []).map((i: any) => ({ id: i.id, url: i.url, alt: i.alt, isPrimary: i.isPrimary })),
     stems: p.stems,
-    inStock: (p.totalStock ?? 0) > 0 || true, // default true for placeholder catalog
+    inStock: stock > 0,
   };
 }
 

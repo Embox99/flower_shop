@@ -109,12 +109,9 @@ export const authOptions: NextAuthOptions = {
     },
   },
   events: {
-    async createUser({ user }) {
-      // Newly-created accounts default to CUSTOMER (Prisma schema handles this);
-      // hook here for future analytics / welcome-email kick-off.
-      if (process.env.NODE_ENV !== "production") {
-        console.log("new user:", user.email);
-      }
+    async createUser() {
+      // Newly-created accounts default to CUSTOMER (Prisma schema handles this).
+      // Hook left here for future analytics / welcome-email kick-off.
     },
   },
 };

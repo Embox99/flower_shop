@@ -38,7 +38,11 @@ export const GET = route(async (req: Request) => {
   const [items, total] = await Promise.all([
     prisma.product.findMany({
       where, orderBy, skip, take: limit,
-      include: { category: true, images: { orderBy: { sortOrder: "asc" } } },
+      include: {
+        category: true,
+        images: { orderBy: { sortOrder: "asc" } },
+        variants: { select: { stockQty: true } },
+      },
     }),
     prisma.product.count({ where }),
   ]);
