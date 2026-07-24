@@ -16,8 +16,42 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import EmailProvider from "next-auth/providers/email";
 import GoogleProvider from "next-auth/providers/google";
 import argon2 from "argon2";
+import nodemailer from "nodemailer";
 import { prisma } from "./prisma";
+import { rateLimit } from "./rate-limit";
 import type { Role } from "@prisma/client";
+
+/**
+ * Sends the customer magic-link email, throttled per address so the sign-in
+ * form can't be used to spam someone's inbox. Fails open if Redis is absent.
+ */
+async function sendMagicLink(params: {
+  identifier: string;
+  url: string;
+  provider: { server: any; from?: string };
+}) {
+  const email = params.identifier.toLowerCase();
+  const { ok, resetSec } = await rateLimit(`magic-link:${email}`, { limit: 3, windowSec: 600 });
+  if (!ok) {
+    throw new Error(`Too many sign-in emails. Please try again in ${resetSec}s.`);
+  }
+
+  const transport = nodemailer.createTransport(params.provider.server);
+  const { host } = new URL(params.url);
+  await transport.sendMail({
+    to: params.identifier,
+    from: params.provider.from,
+    subject: `Sign in to ${host}`,
+    text: `Sign in to Flower Shop\n${params.url}\n\nIf you didn't request this, you can ignore this email.`,
+    html: `
+      <div style="font-family:ui-sans-serif,system-ui,sans-serif;max-width:480px;margin:0 auto;padding:32px 24px;color:#2b2b2b">
+        <h1 style="font-size:22px;margin:0 0 12px">🌸 Flower Shop</h1>
+        <p style="margin:0 0 20px;line-height:1.5">Tap the button below to sign in. This link is good for 30 minutes.</p>
+        <a href="${params.url}" style="display:inline-block;background:#2b2b2b;color:#fff;text-decoration:none;padding:12px 22px;border-radius:8px">Sign in</a>
+        <p style="margin:24px 0 0;font-size:12px;color:#888">If you didn't request this, you can safely ignore this email.</p>
+      </div>`,
+  });
+}
 
 declare module "next-auth" {
   interface Session {
@@ -54,6 +88,7 @@ export const authOptions: NextAuthOptions = {
       server: process.env.EMAIL_SERVER,
       from: process.env.EMAIL_FROM,
       maxAge: 60 * 30, // magic link valid 30 minutes
+      sendVerificationRequest: sendMagicLink,
     }),
     ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
       ? [
