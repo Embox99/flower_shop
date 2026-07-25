@@ -119,10 +119,10 @@ email:    owner@flower-shop.local
 password: studio
 ```
 ### Public
-- `GET  /api/products` — list w/ filters (category, q, min, max, sort, page)
+- `GET  /api/products` — list w/ filters (category, q, min, max, color, stems, deliver, sort, page)
 - `GET  /api/products/[slug]` — single product w/ variants + stems
 - `GET  /api/categories`
-- `GET  /api/cart` — current cart (anon or signed-in)
+- `GET  /api/cart` — current cart (anon or signed-in; merges the guest cart on sign-in)
 - `POST /api/cart` — add a line item
 - `PATCH /api/cart/items/[id]` — update qty / vase / message (qty=0 removes)
 - `DELETE /api/cart/items/[id]`
@@ -130,6 +130,12 @@ password: studio
 - `POST /api/checkout` — convert the cart into an Order
 - `GET  /api/orders?code=FS-XXXXX` — fetch own order (or guest with code only)
 - `GET  /api/orders` — list own orders (signed in)
+
+### Account (signed-in customer)
+- `GET   /api/account/addresses` — saved delivery addresses
+- `POST  /api/account/addresses` — add an address
+- `PATCH /api/account/addresses/[id]` — edit / set default
+- `DELETE /api/account/addresses/[id]`
 
 ### Staff-only (`STAFF` or `OWNER`)
 - `GET   /api/admin/dashboard` — KPIs + activity feed + stock alerts
@@ -142,6 +148,9 @@ password: studio
 - `PATCH /api/admin/products/[id]` — update
 - `DELETE /api/admin/products/[id]` — archive (default) or hard delete (`?hard=1`)
 - `GET   /api/admin/customers` — paged list with LTV
+- `PATCH /api/admin/subscriptions/[id]` — pause / resume / cancel a plan
+- `GET   /api/admin/settings` — shop hours + delivery config
+- `PATCH /api/admin/settings` — update hours / delivery windows / fees (owner)
 - `POST  /api/admin/upload-url` — signed S3 PUT URL for product photography
 
 ### Auth
@@ -156,12 +165,12 @@ All endpoints validate input via Zod and return JSON with appropriate status cod
 | `/admin` | Dashboard — today's revenue, status counts, activity feed, low stock |
 | `/admin/orders` | Filterable order list with status tabs + search |
 | `/admin/orders/[code]` | Order detail — line items, totals, customer, gift note, timeline; one-click status advance + payment marking |
-| `/admin/deliveries` | Today's kanban — drag-style columns for New / Tying / Ready / Out |
+| `/admin/deliveries` | Today's kanban — drag cards between New / Tying / Ready / Out to advance status |
 | `/admin/products` | Catalog — sortable by status, sales, stock |
 | `/admin/products/[id]` | Editor — basics, palette swatch picker, pricing, variant table |
 | `/admin/customers` | Customer list with lifetime value |
-| `/admin/subscriptions` | Active / paused / canceled plans with cadence and next-delivery |
-| `/admin/settings` | Owner-only — shop hours + delivery windows |
+| `/admin/subscriptions` | Active / paused / canceled plans with pause / resume / cancel controls |
+| `/admin/settings` | Owner-only — editable shop hours, delivery windows, fees |
 
 ## Authentication & roles
 
