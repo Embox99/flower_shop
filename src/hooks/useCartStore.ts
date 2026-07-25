@@ -65,6 +65,21 @@ function apply(set: any, data: any) {
   });
 }
 
+/**
+ * Run a cart mutation with loading bookkeeping. On failure we must clear
+ * `loading` (and rethrow so callers can surface the error) — otherwise a failed
+ * add/update leaves the buttons stuck in their "Adding…" disabled state.
+ */
+async function mutate(set: any, work: () => Promise<any>) {
+  set({ loading: true });
+  try {
+    apply(set, await work());
+  } catch (e) {
+    set({ loading: false });
+    throw e;
+  }
+}
+
 export const useCartStore = create<CartState>((set, get) => ({
   cartId: null, lines: [], subtotal: 0, deliveryFee: 0, total: 0, currency: "USD",
   counter: 0, loading: false,
@@ -75,25 +90,15 @@ export const useCartStore = create<CartState>((set, get) => ({
     catch { set({ loading: false }); }
   },
 
-  add: async (input) => {
-    set({ loading: true });
-    apply(set, await fetchJSON("/api/cart", { method: "POST", body: JSON.stringify(input) }));
-  },
+  add: (input) =>
+    mutate(set, () => fetchJSON("/api/cart", { method: "POST", body: JSON.stringify(input) })),
 
-  updateQty: async (lineId, qty) => {
-    set({ loading: true });
-    apply(set, await fetchJSON(`/api/cart/items/${lineId}`, {
-      method: "PATCH", body: JSON.stringify({ qty }),
-    }));
-  },
+  updateQty: (lineId, qty) =>
+    mutate(set, () => fetchJSON(`/api/cart/items/${lineId}`, { method: "PATCH", body: JSON.stringify({ qty }) })),
 
-  remove: async (lineId) => {
-    set({ loading: true });
-    apply(set, await fetchJSON(`/api/cart/items/${lineId}`, { method: "DELETE" }));
-  },
+  remove: (lineId) =>
+    mutate(set, () => fetchJSON(`/api/cart/items/${lineId}`, { method: "DELETE" })),
 
-  clear: async () => {
-    set({ loading: true });
-    apply(set, await fetchJSON("/api/cart", { method: "DELETE" }));
-  },
+  clear: () =>
+    mutate(set, () => fetchJSON("/api/cart", { method: "DELETE" })),
 }));
