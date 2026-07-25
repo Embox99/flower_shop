@@ -1,10 +1,15 @@
 "use client";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useCartStore } from "../../hooks/useCartStore";
 import BouquetIllustration from "../../components/BouquetIllustration";
 
 const fmt = (cents: number) => `$${(cents / 100).toFixed(2)}`;
+
+type SavedAddress = {
+  id: string; label?: string | null; line1: string; line2?: string | null;
+  city: string; zip?: string | null; phone?: string | null; isDefault: boolean;
+};
 
 export default function CheckoutPage() {
   const router = useRouter();
@@ -27,6 +32,33 @@ export default function CheckoutPage() {
   });
   const set = (k: keyof typeof form) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) =>
     setForm((f) => ({ ...f, [k]: e.target.value }));
+
+  // Signed-in customers get their saved addresses offered as one-tap fill.
+  const [savedAddresses, setSavedAddresses] = useState<SavedAddress[]>([]);
+  useEffect(() => {
+    let active = true;
+    fetch("/api/account/addresses", { credentials: "include" })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (!active || !d?.addresses?.length) return;
+        setSavedAddresses(d.addresses);
+        const def = d.addresses.find((a: SavedAddress) => a.isDefault) || d.addresses[0];
+        if (def) fillFromAddress(def);
+      })
+      .catch(() => {});
+    return () => { active = false; };
+  }, []);
+
+  function fillFromAddress(a: SavedAddress) {
+    setForm((f) => ({
+      ...f,
+      addressLine1: a.line1,
+      addressLine2: a.line2 || "",
+      city: a.city,
+      zip: a.zip || "",
+      phone: a.phone || f.phone,
+    }));
+  }
 
   if (lines.length === 0) {
     return (
@@ -122,6 +154,21 @@ export default function CheckoutPage() {
           {step === 2 && (
             <section className="fs-form-section">
               <h3>Who&apos;s it from, and to</h3>
+              {savedAddresses.length > 0 && (
+                <div style={{ display: "flex", gap: 8, flexWrap: "wrap", marginBottom: 16 }}>
+                  {savedAddresses.map((a) => (
+                    <button
+                      key={a.id}
+                      type="button"
+                      className="fs-chip"
+                      onClick={() => fillFromAddress(a)}
+                      title={[a.line1, a.city].filter(Boolean).join(", ")}
+                    >
+                      {a.label || a.line1}{a.isDefault ? " · default" : ""}
+                    </button>
+                  ))}
+                </div>
+              )}
               <div className="fs-form-grid">
                 <label><span>Your email</span><input value={form.email} onChange={set("email")} placeholder="for the receipt" /></label>
                 <label><span>Your name</span><input value={form.name} onChange={set("name")} placeholder="Anna" /></label>

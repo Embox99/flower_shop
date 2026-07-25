@@ -41,6 +41,11 @@ export default async function AccountPage() {
         </div>
       </div>
 
+      <div className="flex gap-3 mb-12">
+        <Link href="/account/orders" className="fs-btn fs-btn--ghost">Your orders</Link>
+        <Link href="/account/addresses" className="fs-btn fs-btn--ghost">Address book</Link>
+      </div>
+
       <h2 className="font-serif text-2xl mb-4">Recent orders</h2>
       {user.orders.length === 0 ? (
         <div className="bg-bg-card border border-[var(--fs-line-soft)] rounded-2xl p-12 text-center">

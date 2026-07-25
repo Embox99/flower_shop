@@ -1048,6 +1048,16 @@
 .fs-form-grid input:focus, .fs-form-grid textarea:focus { border-color: var(--fs-ink); }
 .fs-form-grid-wide { grid-column: 1/-1; }
 
+/* Standalone input (address book etc.) */
+.fs-input {
+  border: 1px solid var(--fs-line); background: var(--fs-bg-card);
+  padding: 10px 12px;
+  border-radius: 10px;
+  font: inherit; color: var(--fs-ink);
+  outline: none; width: 100%;
+}
+.fs-input:focus { border-color: var(--fs-ink); }
+
 .fs-form-actions { display: flex; gap: 12px; justify-content: space-between; }
 
 .fs-payment-row { display: flex; gap: 8px; margin-bottom: 18px; }
