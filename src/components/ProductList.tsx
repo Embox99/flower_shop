@@ -16,6 +16,9 @@ const ProductList = async ({ category, limit, searchParams: rawSp }: Props) => {
     page: sp?.page,
     sort: sp?.sort,
     q: sp?.q,
+    color: sp?.color,
+    stems: sp?.stems,
+    deliver: sp?.deliver,
     min: sp?.min ? parseInt(sp.min) * 100 : undefined,
     max: sp?.max ? parseInt(sp.max) * 100 : undefined,
   };

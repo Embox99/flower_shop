@@ -12,10 +12,15 @@ const colorChips = [
 ];
 
 const stemRanges = [
-  "8 – 14 (posy)",
-  "16 – 24 (everyday)",
-  "26 – 36 (statement)",
-  "40 + (event)",
+  { id: "posy",      label: "8 – 14 (posy)" },
+  { id: "everyday",  label: "16 – 24 (everyday)" },
+  { id: "statement", label: "26 – 36 (statement)" },
+  { id: "event",     label: "40 + (event)" },
+];
+
+const deliverOptions = [
+  { id: "today",    label: "Today (Tel Aviv)" },
+  { id: "tomorrow", label: "Tomorrow" },
 ];
 
 const Filter = () => {
@@ -27,10 +32,13 @@ const Filter = () => {
     const next = new URLSearchParams(params);
     if (v) next.set(k, v);
     else next.delete(k);
+    next.delete("page"); // any filter change returns to page 1
     router.replace(`${pathname}?${next.toString()}`, { scroll: false });
   };
 
   const activeColor = params.get("color");
+  const activeStems = params.get("stems");
+  const activeDeliver = params.get("deliver");
   const max = params.get("max") || "300";
 
   return (
@@ -70,25 +78,30 @@ const Filter = () => {
 
       <div className="fs-filter-group">
         <h5>Stems</h5>
-        {stemRanges.map((s, i) => (
-          <label key={i} className="fs-checkbox">
-            <input type="checkbox" />
-            <span>{s}</span>
+        {stemRanges.map((s) => (
+          <label key={s.id} className="fs-checkbox">
+            <input
+              type="checkbox"
+              checked={activeStems === s.id}
+              onChange={() => update("stems", activeStems === s.id ? null : s.id)}
+            />
+            <span>{s.label}</span>
           </label>
         ))}
       </div>
 
       <div className="fs-filter-group">
         <h5>Delivery</h5>
-        <label className="fs-checkbox">
-          <input type="checkbox" defaultChecked /> <span>Today (Tel Aviv)</span>
-        </label>
-        <label className="fs-checkbox">
-          <input type="checkbox" /> <span>Tomorrow</span>
-        </label>
-        <label className="fs-checkbox">
-          <input type="checkbox" /> <span>Pick a date</span>
-        </label>
+        {deliverOptions.map((d) => (
+          <label key={d.id} className="fs-checkbox">
+            <input
+              type="checkbox"
+              checked={activeDeliver === d.id}
+              onChange={() => update("deliver", activeDeliver === d.id ? null : d.id)}
+            />
+            <span>{d.label}</span>
+          </label>
+        ))}
       </div>
 
       <button
