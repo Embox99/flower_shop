@@ -1,4 +1,5 @@
 import ProductCard from "./ProductCard";
+import Pagination from "./Pagination";
 import { listProducts } from "../lib/product-api";
 
 type Props = {
@@ -27,9 +28,14 @@ const ProductList = async ({ category, limit, searchParams: rawSp }: Props) => {
     return <div className="fs-list-empty"><p>Nothing matches these filters today.</p></div>;
   }
   return (
-    <div className="fs-list-grid">
-      {data.items.map((p, i) => <ProductCard key={p.id} product={p} index={i} />)}
-    </div>
+    <>
+      <div className="fs-list-grid">
+        {data.items.map((p, i) => <ProductCard key={p.id} product={p} index={i} />)}
+      </div>
+      {(data.hasMore || data.page > 1) && (
+        <Pagination page={data.page} hasPrev={data.page > 1} hasNext={data.hasMore} />
+      )}
+    </>
   );
 };
 
