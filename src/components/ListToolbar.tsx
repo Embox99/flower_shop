@@ -1,6 +1,7 @@
 "use client";
 import React from "react";
 import { usePathname, useSearchParams, useRouter } from "next/navigation";
+import { useUIStore } from "../hooks/useUIStore";
 
 export default function ListToolbar({
   count,
@@ -15,6 +16,8 @@ export default function ListToolbar({
 
   const active = params.get("cat") || "all";
   const sort = params.get("sort") || "";
+  const setFiltersOpen = useUIStore((s) => s.setFiltersOpen);
+  const activeFilters = ["color", "stems", "deliver", "max"].filter((k) => params.get(k)).length;
 
   const setCat = (slug: string) => {
     const next = new URLSearchParams(params);
@@ -33,11 +36,17 @@ export default function ListToolbar({
 
   return (
     <section className="fs-list-toolbar">
-      <button type="button" className="fs-toolbar-btn">
+      <button
+        type="button"
+        className="fs-toolbar-btn fs-toolbar-btn--filters"
+        aria-controls="fs-filters"
+        onClick={() => setFiltersOpen(true)}
+      >
         <svg width="14" height="14" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5">
           <path d="M3 6h14M5 10h10M7 14h6" />
         </svg>
         Filters
+        {activeFilters > 0 && <span className="fs-toolbar-dot" aria-label={`${activeFilters} active`} />}
       </button>
       <div className="fs-toolbar-cats">
         <button
@@ -57,9 +66,9 @@ export default function ListToolbar({
         ))}
       </div>
       <div className="fs-toolbar-right">
-        <span className="fs-toolbar-count">{count} pieces</span>
+        <span className="fs-toolbar-count">{count} {count === 1 ? "piece" : "pieces"}</span>
         <label className="fs-toolbar-sort">
-          Sort
+          <span className="fs-toolbar-sort-label">Sort</span>
           <select value={sort} onChange={(e) => setSort(e.target.value)}>
             <option value="">Featured</option>
             <option value="bestseller">Bestselling</option>
