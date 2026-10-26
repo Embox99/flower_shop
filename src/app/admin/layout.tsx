@@ -20,7 +20,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     <div className="ad-frame">
       <AdminSidebar user={session.user} />
       <div className="ad-main">
-        <AdminTopbar user={session.user} />
+        <AdminTopbar />
         {children}
       </div>
     </div>

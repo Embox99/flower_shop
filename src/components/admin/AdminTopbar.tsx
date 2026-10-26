@@ -1,8 +1,7 @@
 "use client";
 import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { signOut } from "next-auth/react";
-import type { Session } from "next-auth";
+import { useUIStore } from "../../hooks/useUIStore";
 
 type Order = { id: string; code: string; status: string; total: number; currency: string; recipientName: string };
 type Product = { id: string; slug: string; name: string; sku: string; basePrice: number; currency: string };
@@ -11,11 +10,12 @@ type Customer = { id: string; name: string | null; email: string };
 const fmt = (cents: number, currency: string) =>
   new Intl.NumberFormat("en-US", { style: "currency", currency, minimumFractionDigits: 0 }).format(cents / 100);
 
-export default function AdminTopbar({ user }: { user: Session["user"] }) {
+export default function AdminTopbar() {
   const now = new Date();
   const time = now.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
   const date = now.toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long" });
 
+  const setNavOpen = useUIStore((s) => s.setAdminNavOpen);
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<{ orders: Order[]; products: Product[]; customers: Customer[] } | null>(null);
@@ -80,6 +80,16 @@ export default function AdminTopbar({ user }: { user: Session["user"] }) {
 
   return (
     <header className="ad-topbar">
+      <button
+        className="ad-burger"
+        onClick={() => setNavOpen(true)}
+        aria-label="Open menu"
+        aria-controls="ad-sidebar"
+      >
+        <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5">
+          <path d="M3 6h14M3 10h14M3 14h14" />
+        </svg>
+      </button>
       <div ref={wrapRef} className="ad-search-wrap">
         <div className="ad-search-box">
           <svg width="16" height="16" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5">
@@ -144,19 +154,10 @@ export default function AdminTopbar({ user }: { user: Session["user"] }) {
         )}
       </div>
 
-      <div style={{ flex: 1 }} />
-      <div style={{
-        display: "flex", flexDirection: "column", alignItems: "flex-end",
-        fontFamily: "var(--font-mono), monospace", fontSize: 10,
-        letterSpacing: "0.08em", color: "var(--ad-ink-mute)",
-        textTransform: "uppercase", lineHeight: 1.3,
-      }}>
+      <div className="ad-topbar-clock" suppressHydrationWarning>
         <span>{date}</span>
-        <b style={{ color: "var(--ad-ink)", fontWeight: 500 }}>{time} · Florentin shop</b>
+        <b>{time} · Florentin shop</b>
       </div>
-      <button className="ad-btn ad-btn--sm" onClick={() => signOut({ callbackUrl: "/" })}>
-        Sign out
-      </button>
     </header>
   );
 }
