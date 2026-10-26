@@ -5,6 +5,8 @@ import { json, route, bad, readBody, HttpError } from "../../../lib/api";
 import { getOrCreateCart, priceCart } from "../../../lib/cart";
 import { enforceRateLimit } from "../../../lib/rate-limit";
 import { cookies } from "next/headers";
+import { rememberOrder } from "../../../lib/orders";
+import { invalidateCatalog } from "../../../lib/catalog";
 
 const schema = z.object({
   recipientName: z.string().min(1, "Required"),
@@ -140,7 +142,11 @@ export const POST = route(async (req: Request) => {
     return created;
   });
 
+  // Stock and bestseller tallies changed — refresh the cached catalogue.
+  invalidateCatalog();
+
   // Cookie mutation must happen outside the DB transaction.
+  await rememberOrder(order.code);
   if (!session) {
     const store = await cookies();
     store.delete("fs_cart");

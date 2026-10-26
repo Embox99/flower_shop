@@ -1,22 +1,9 @@
 import React from "react";
 import Link from "next/link";
-import { headers } from "next/headers";
 import BouquetIllustration from "../../components/BouquetIllustration";
+import { findViewableOrder } from "../../lib/orders";
 
 const fmt = (cents: number) => `$${(cents / 100).toFixed(2)}`;
-
-async function fetchOrder(code: string) {
-  const h = await headers();
-  const proto = h.get("x-forwarded-proto") || "http";
-  const host = h.get("host") || "localhost:3000";
-  const base = `${proto}://${host}`;
-  const res = await fetch(`${base}/api/orders?code=${encodeURIComponent(code)}`, {
-    cache: "no-store",
-    headers: { cookie: h.get("cookie") || "" },
-  });
-  if (!res.ok) return null;
-  return res.json();
-}
 
 export default async function SuccessPage({
   searchParams,
@@ -24,8 +11,7 @@ export default async function SuccessPage({
   searchParams: Promise<{ code?: string }>;
 }) {
   const { code } = await searchParams;
-  const data = code ? await fetchOrder(code) : null;
-  const order = data?.order;
+  const order = code ? await findViewableOrder(code) : null;
 
   return (
     <main className="fs-success">
