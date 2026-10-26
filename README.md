@@ -11,6 +11,7 @@
 ![Postgres](https://img.shields.io/badge/Postgres-16-336791?logo=postgresql&logoColor=white)
 ![Prisma](https://img.shields.io/badge/Prisma-5-2D3748?logo=prisma&logoColor=white)
 ![NextAuth](https://img.shields.io/badge/Auth.js-NextAuth-1B7CFF)
+[![CI](https://github.com/Embox99/flower_shop/actions/workflows/ci.yml/badge.svg)](https://github.com/Embox99/flower_shop/actions/workflows/ci.yml)
 
 </div>
 
@@ -30,13 +31,22 @@ v1 was a redesign on top of **Wix Headless**. v2 brings the backend home:
 | Payments | Wix-hosted | Mocked — staff marks PAID in admin |
 
 
-**P.S.** I know the sidebar, sign-in page, and a few other UI elements look a bit cringe right now, but I'll polish them in the upcoming updates! 🛠️
 
 ## Preview
 
 ![Catalog Preview](./public//images//main_preview.png)
 
 ![Admin Preview](./public/images/admin_preview.png)
+
+## Highlights
+
+- **Fast by default.** Server components read the catalogue straight from Postgres through one cached data layer (`unstable_cache` + tag revalidation), so pages never round-trip through their own API. The home page is statically prerendered with ISR.
+- **Mobile-first storefront.** Responsive down to 360px: bottom-sheet filters, sticky add-to-basket bar, touch-friendly quick add, no iOS input zoom.
+- **Real commerce plumbing.** Server-side pricing, atomic stock decrement in a transaction, guest and signed-in carts that merge on sign-in, owner-editable delivery fees.
+- **Secure where it matters.** Redis rate limiting on cart, checkout, magic links and order lookup; order details only visible to their owner or the browser that placed them; drafts never leak through public endpoints.
+- **SEO ready.** Per-product metadata, Open Graph, schema.org `Product` JSON-LD, `sitemap.xml` and `robots.txt`.
+- **Accessible.** Focus-visible rings, skip link, Escape-to-close dialogs with scroll lock, `prefers-reduced-motion` support.
+- **A real admin.** Dashboard, order pipeline, drag-and-drop delivery board, product editor with S3 uploads, customers and subscriptions.
 
 ## Tech stack
 
@@ -60,8 +70,8 @@ v1 was a redesign on top of **Wix Headless**. v2 brings the backend home:
 
 ### 1. Install
 ```bash
-git clone <repo>
-cd flower-shop
+git clone https://github.com/Embox99/flower_shop.git
+cd flower_shop
 npm install
 ```
 
@@ -73,15 +83,15 @@ This brings up four containers:
 
 | Service | Port | What it is |
 |---|---|---|
-| Postgres | 5432 | Primary database |
-| Redis | 6379 | Future caching / rate limit |
+| Postgres | 5433 | Primary database |
+| Redis | 6379 | Rate limiting (optional — fails open) |
 | MinIO | 9000 (API), 9001 (console) | S3-compatible image storage |
 | Mailhog | 1025 (SMTP), 8025 (web) | Catches magic-link emails |
 
 ### 3. Configure environment
 ```bash
-cp .env.example .env.local
-cp .env.example .env
+cp env.example .env.local
+cp env.example .env
 
 # generate a secret and paste it into NEXTAUTH_SECRET in .env.local:
 openssl rand -base64 32
@@ -119,7 +129,7 @@ email:    owner@flower-shop.local
 password: studio
 ```
 ### Public
-- `GET  /api/products` — list w/ filters (category, q, min, max, color, stems, deliver, sort, page)
+- `GET  /api/products` — live products w/ filters (category, q, min, max, color, stems, deliver, sort, page)
 - `GET  /api/products/[slug]` — single product w/ variants + stems
 - `GET  /api/categories`
 - `GET  /api/cart` — current cart (anon or signed-in; merges the guest cart on sign-in)
@@ -128,7 +138,7 @@ password: studio
 - `DELETE /api/cart/items/[id]`
 - `DELETE /api/cart` — clear the cart
 - `POST /api/checkout` — convert the cart into an Order
-- `GET  /api/orders?code=FS-XXXXX` — fetch own order (or guest with code only)
+- `GET  /api/orders?code=FS-XXXXX` — fetch an order you own or placed from this browser
 - `GET  /api/orders` — list own orders (signed in)
 
 ### Account (signed-in customer)
@@ -201,7 +211,15 @@ npm run test          # Vitest — unit
 npm run test:watch
 npm run test:e2e      # Playwright — opens a real browser
 npm run test:e2e:ui   # Playwright UI mode
+npm run lint
+npm run typecheck
 ```
+
+CI runs lint, typecheck, unit tests and a production build on every push and pull request.
+
+## Contributing
+
+Issues and pull requests are welcome. Run `npm run lint && npm run typecheck && npm test` before opening a PR.
 
 <div align="center">
 <sub>If this saved you a Wix subscription, consider giving it a ⭐.</sub>
