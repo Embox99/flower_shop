@@ -47,7 +47,7 @@ v1 was a redesign on top of **Wix Headless**. v2 brings the backend home:
 - **Secure where it matters.** Redis rate limiting on cart, checkout, magic links and order lookup; order details only visible to their owner or the browser that placed them; drafts never leak through public endpoints.
 - **SEO ready.** Per-product metadata, Open Graph, schema.org `Product` JSON-LD, `sitemap.xml` and `robots.txt`.
 - **Accessible.** Focus-visible rings, skip link, Escape-to-close dialogs with scroll lock, `prefers-reduced-motion` support.
-- **A real admin.** Dashboard, order pipeline, drag-and-drop delivery board, product editor with S3 uploads, customers and subscriptions.
+- **A real admin.** Dashboard, order pipeline, drag-and-drop delivery board, product editor with S3 uploads, customers and subscriptions — usable on a phone too, with a slide-out sidebar.
 
 ## Tech stack
 
