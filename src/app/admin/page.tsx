@@ -88,7 +88,7 @@ export default async function AdminDashboard() {
 
       <div className="ad-kpis">
         <div className="ad-kpi">
-          <div className="ad-kpi-label">Today's revenue</div>
+          <div className="ad-kpi-label">Today&apos;s revenue</div>
           <div className="ad-kpi-value">
             {fmt(todayRevenue._sum.total || 0)}
           </div>

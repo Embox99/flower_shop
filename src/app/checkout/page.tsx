@@ -200,7 +200,7 @@ export default function CheckoutPage() {
                 <label><span>Delivery</span><div className="border border-[var(--fs-line)] rounded-xl px-4 py-3 bg-bg-card">{deliveryLabel(delivery)}</div></label>
                 {form.giftMessage && (
                   <label className="fs-form-grid-wide"><span>Card</span>
-                    <div className="border border-[var(--fs-line)] rounded-xl px-4 py-3 bg-bg-card font-serif italic">"{form.giftMessage}"</div>
+                    <div className="border border-[var(--fs-line)] rounded-xl px-4 py-3 bg-bg-card font-serif italic">&ldquo;{form.giftMessage}&rdquo;</div>
                   </label>
                 )}
               </div>

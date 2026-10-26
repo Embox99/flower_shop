@@ -1,9 +1,11 @@
 "use client";
-import React from "react";
+import React, { useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import FlowerShopMark from "../FlowerShopMark";
+import { signOut } from "next-auth/react";
 import type { Session } from "next-auth";
+import { useUIStore } from "../../hooks/useUIStore";
 
 const items = [
   { href: "/admin",            label: "Dashboard",  icon: "dashboard" },
@@ -32,9 +34,23 @@ export default function AdminSidebar({ user }: { user: Session["user"] }) {
   const path = usePathname();
   const isActive = (href: string) => href === "/admin" ? path === "/admin" : path.startsWith(href);
   const initials = (user.name || user.email).split(" ").map(w => w[0]).slice(0, 2).join("").toUpperCase();
+  const open = useUIStore((s) => s.adminNavOpen);
+  const setOpen = useUIStore((s) => s.setAdminNavOpen);
+
+  // On small screens the sidebar is a drawer: close it after navigating,
+  // and on Escape while open.
+  useEffect(() => { setOpen(false); }, [path, setOpen]);
+  useEffect(() => {
+    if (!open) return;
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [open, setOpen]);
 
   return (
-    <aside className="ad-sidebar">
+    <>
+    {open && <div className="ad-sidebar-scrim" onClick={() => setOpen(false)} />}
+    <aside id="ad-sidebar" className={"ad-sidebar" + (open ? " ad-sidebar--open" : "")}>
       <div className="ad-sidebar-brand">
         <FlowerShopMark size={28} color="#f4ead8" />
         <span className="ad-sidebar-brand-word">Flower Shop</span>
@@ -52,13 +68,21 @@ export default function AdminSidebar({ user }: { user: Session["user"] }) {
           );
         })}
       </nav>
+      <Link href="/" className="ad-nav-item ad-nav-store">
+        <svg viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M11 3h6v6M17 3l-8 8M14 12v4a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h4"/></svg>
+        <span>View storefront</span>
+      </Link>
       <div className="ad-sidebar-user">
         <div className="ad-sidebar-user-avatar">{initials}</div>
-        <div>
-          <div style={{ fontSize: 13, color: "#fff" }}>{user.name || user.email}</div>
-          <div style={{ fontSize: 11, color: "rgba(255,255,255,0.5)" }}>{user.role.toLowerCase()}</div>
+        <div className="ad-sidebar-user-text">
+          <div className="ad-sidebar-user-name">{user.name || user.email}</div>
+          <div className="ad-sidebar-user-role">{user.role.toLowerCase()}</div>
         </div>
+        <button className="ad-sidebar-signout" onClick={() => signOut({ callbackUrl: "/" })} aria-label="Sign out" title="Sign out">
+          <svg viewBox="0 0 20 20" width="16" height="16" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M8 4H4v12h4M13 6l4 4-4 4M17 10H8"/></svg>
+        </button>
       </div>
     </aside>
+    </>
   );
 }

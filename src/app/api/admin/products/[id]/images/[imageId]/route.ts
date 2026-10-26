@@ -2,6 +2,7 @@ import { z } from "zod";
 import { prisma } from "../../../../../../../lib/prisma";
 import { json, route, bad, readBody } from "../../../../../../../lib/api";
 import { requireStaff } from "../../../../../../../lib/auth-helpers";
+import { invalidateCatalog } from "../../../../../../../lib/catalog";
 
 type Params = { params: Promise<{ id: string; imageId: string }> };
 
@@ -32,6 +33,7 @@ export const PATCH = route(async (req: Request, { params }: Params) => {
     });
   });
 
+  invalidateCatalog();
   return json({ ok: true });
 });
 
@@ -54,5 +56,6 @@ export const DELETE = route(async (_req: Request, { params }: Params) => {
     }
   });
 
+  invalidateCatalog();
   return json({ ok: true });
 });

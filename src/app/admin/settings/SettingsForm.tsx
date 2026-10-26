@@ -64,7 +64,7 @@ export default function SettingsForm({
     <>
       <div className="ad-form-section">
         <h3>Opening hours</h3>
-        <div style={{ display: "grid", gridTemplateColumns: "120px 1fr 1fr auto", gap: 10, alignItems: "center" }}>
+        <div className="ad-hours-grid">
           {DAYS.map((day) => (
             <div key={day} style={{ display: "contents" }}>
               <span style={{ fontSize: 13, textTransform: "capitalize" }}>{day}</span>

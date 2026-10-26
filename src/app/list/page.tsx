@@ -1,20 +1,25 @@
 import React, { Suspense } from "react";
 import Link from "next/link";
-import { listCategories } from "../../lib/product-api";
+import { listCategories, listProducts } from "../../lib/product-api";
 import Filter from "../../components/Filter";
 import ListToolbar from "../../components/ListToolbar";
-import ProductList from "../../components/ProductList";
+import ProductList, { listQuery } from "../../components/ProductList";
 import Skeleton from "../../components/Skeleton";
 import BouquetIllustration from "../../components/BouquetIllustration";
 
 const ListPage = async ({
   searchParams,
 }: {
-  searchParams: Promise<{ cat?: string; sort?: string; max?: string; page?: string; q?: string }>;
+  searchParams: Promise<Record<string, string | undefined>>;
 }) => {
   const sp = await searchParams;
   const catSlug = sp.cat;
-  const { items: allCats } = await listCategories();
+  // Both reads hit the cached catalogue; the count query is the same one
+  // ProductList runs below, so it's served from cache there.
+  const [{ items: allCats }, { total }] = await Promise.all([
+    listCategories(),
+    listProducts(listQuery(catSlug, sp)),
+  ]);
   const cat = allCats.find((c) => c.slug === catSlug);
   const hue = cat?.hue || "#e8d9c4";
 
@@ -48,7 +53,7 @@ const ListPage = async ({
         </div>
       </section>
 
-      <ListToolbar count="…" cats={navCats} />
+      <ListToolbar count={total} cats={navCats} />
 
       <div className="fs-list-body">
         <Filter />

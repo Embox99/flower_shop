@@ -2,6 +2,7 @@ import { z } from "zod";
 import { prisma } from "../../../../../../../lib/prisma";
 import { json, route, bad, readBody } from "../../../../../../../lib/api";
 import { requireStaff } from "../../../../../../../lib/auth-helpers";
+import { invalidateCatalog } from "../../../../../../../lib/catalog";
 
 type Params = { params: Promise<{ id: string; variantId: string }> };
 
@@ -25,5 +26,6 @@ export const PATCH = route(async (req: Request, { params }: Params) => {
     where: { id: variant.id },
     data,
   });
+  invalidateCatalog();
   return json({ variant: updated });
 });

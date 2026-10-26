@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Cormorant_Garamond, Inter_Tight, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import Banner from "../components/Banner";
@@ -7,6 +7,7 @@ import Footer from "../components/Footer";
 import CartDrawer from "../components/CartDrawer";
 import Toast from "../components/Toast";
 import Providers from "./providers";
+import ShopChrome from "../components/ShopChrome";
 
 const serif = Cormorant_Garamond({
   weight: ["400", "500", "600"],
@@ -28,10 +29,30 @@ const mono = JetBrains_Mono({
   display: "swap",
 });
 
+const description =
+  "A small flower studio in Florentin, Tel Aviv. Cut at first light, delivered the same afternoon.";
+
 export const metadata: Metadata = {
-  title: "Flower Shop — hand-tied in Tel Aviv",
-  description:
-    "A small flower studio in Florentin, Tel Aviv. Cut at first light, delivered the same afternoon.",
+  metadataBase: new URL(process.env.APP_URL || "http://localhost:3000"),
+  title: {
+    default: "Flower Shop — hand-tied in Tel Aviv",
+    template: "%s · Flower Shop",
+  },
+  description,
+  openGraph: {
+    siteName: "Flower Shop",
+    title: "Flower Shop — hand-tied in Tel Aviv",
+    description,
+    type: "website",
+    images: ["/images/main_preview.png"],
+  },
+  twitter: { card: "summary_large_image" },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#faf6ef",
+  width: "device-width",
+  initialScale: 1,
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
@@ -39,12 +60,12 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="en" className={`${serif.variable} ${sans.variable} ${mono.variable}`}>
       <body className="bg-bg text-ink font-sans antialiased">
         <Providers>
-          <Banner />
-          <Navbar />
-          {children}
-          <Footer />
-          <CartDrawer />
-          <Toast />
+          <ShopChrome
+            top={<><Banner /><Navbar /></>}
+            bottom={<><Footer /><CartDrawer /><Toast /></>}
+          >
+            {children}
+          </ShopChrome>
         </Providers>
       </body>
     </html>

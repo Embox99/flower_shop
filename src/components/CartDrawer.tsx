@@ -19,11 +19,30 @@ export default function CartDrawer() {
   const open = useUIStore((s) => s.cartOpen);
   const setOpen = useUIStore((s) => s.setCartOpen);
 
+  // Lock page scroll and close on Escape while the drawer is open.
+  React.useEffect(() => {
+    if (!open) return;
+    const root = document.documentElement;
+    root.classList.add("fs-scroll-lock");
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      root.classList.remove("fs-scroll-lock");
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [open, setOpen]);
+
   if (!open) return null;
 
   return (
     <div className="fs-drawer-scrim" onClick={() => setOpen(false)}>
-      <aside className="fs-drawer" onClick={(e) => e.stopPropagation()}>
+      <aside
+        className="fs-drawer"
+        role="dialog"
+        aria-modal="true"
+        aria-label="Your basket"
+        onClick={(e) => e.stopPropagation()}
+      >
         <div className="fs-drawer-head">
           <h3>Your basket <span>({counter})</span></h3>
           <button className="fs-icon-btn" onClick={() => setOpen(false)} aria-label="Close">

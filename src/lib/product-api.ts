@@ -1,6 +1,7 @@
 /**
- * Server-side fetchers + types for our own API.
- * These are import-free (no `'use client'`) so server components can call them.
+ * Storefront types + server-side fetchers.
+ * Client components may `import type` from here; the fetchers lazy-load the
+ * Prisma-backed data layer so it never ends up in a client bundle.
  */
 
 export type ProductSummary = {
@@ -32,25 +33,23 @@ export type Category = {
   hue?: string | null; image?: string | null; productCount: number;
 };
 
-const base = process.env.APP_URL || "http://localhost:3000";
-
-export async function listProducts(params: Record<string, string | number | undefined> = {}): Promise<{ items: ProductSummary[]; total: number; page: number; limit: number; hasMore: boolean; }> {
+/**
+ * Server-side fetchers. These read the catalogue straight from the shared data
+ * layer (lib/catalog) — no HTTP round-trip to our own API.
+ */
+export async function listProducts(params: Record<string, string | number | undefined> = {}) {
+  const { queryProducts, productQueryFromParams } = await import("./catalog");
   const qs = new URLSearchParams();
   for (const [k, v] of Object.entries(params)) if (v != null && v !== "") qs.set(k, String(v));
-  const res = await fetch(`${base}/api/products?${qs}`, { cache: "no-store" });
-  if (!res.ok) throw new Error(`Failed to load products: ${res.status}`);
-  return res.json();
+  return queryProducts(productQueryFromParams(qs));
 }
 
 export async function getProduct(slug: string): Promise<ProductDetail | null> {
-  const res = await fetch(`${base}/api/products/${slug}`, { cache: "no-store" });
-  if (res.status === 404) return null;
-  if (!res.ok) throw new Error(`Failed to load product: ${res.status}`);
-  return res.json();
+  const { getProductBySlug } = await import("./catalog");
+  return getProductBySlug(slug);
 }
 
 export async function listCategories(): Promise<{ items: Category[] }> {
-  const res = await fetch(`${base}/api/categories`, { cache: "no-store" });
-  if (!res.ok) throw new Error(`Failed to load categories: ${res.status}`);
-  return res.json();
+  const { listCategories: list } = await import("./catalog");
+  return list();
 }

@@ -2,6 +2,8 @@ import { prisma } from "../../../lib/prisma";
 import { auth } from "../../../lib/auth";
 import { json, route, bad, readPaging } from "../../../lib/api";
 import { serializeOrder } from "../../../lib/serializers";
+import { findViewableOrder } from "../../../lib/orders";
+import { enforceRateLimit } from "../../../lib/rate-limit";
 
 /**
  * GET /api/orders — list the signed-in user's orders.
@@ -12,16 +14,12 @@ export const GET = route(async (req: Request) => {
   const url = new URL(req.url);
   const code = url.searchParams.get("code");
 
-  // Anonymous code lookup: only allow if the order has no userId (true guest).
+  // Code lookup: own orders, or ones placed from this browser. Unknown and
+  // foreign codes both 404 so codes can't be probed for existence.
   if (code) {
-    const order = await prisma.order.findUnique({
-      where: { code },
-      include: { items: true, events: { orderBy: { createdAt: "asc" } } },
-    });
+    await enforceRateLimit(req, "order-lookup", { limit: 30, windowSec: 60 });
+    const order = await findViewableOrder(code);
     if (!order) return bad("Order not found", 404);
-    if (order.userId && order.userId !== session?.user?.id) {
-      return bad("Forbidden", 403);
-    }
     return json({ order: serializeOrder(order) });
   }
 

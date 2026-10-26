@@ -2,11 +2,13 @@
   "name": "flower-shop",
   "version": "2.0.0",
   "private": true,
+  "license": "MIT",
   "scripts": {
     "dev":       "next dev",
     "build":     "prisma generate && next build",
     "start":     "next start",
     "lint":      "next lint",
+    "typecheck": "tsc --noEmit",
 
     "docker:up":      "docker compose up -d",
     "docker:down":    "docker compose down",
@@ -19,7 +21,7 @@
     "db:seed":        "tsx prisma/seed.ts",
     "db:studio":      "prisma studio",
 
-    "setup":          "npm run docker:up && sleep 4 && npm run db:migrate && npm run db:seed",
+    "setup":          "npm run docker:up && docker compose up -d --wait postgres && npm run db:migrate:deploy && npm run db:seed",
 
     "test":           "vitest run",
     "test:watch":     "vitest",
