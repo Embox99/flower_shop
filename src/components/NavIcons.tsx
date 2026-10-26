@@ -22,7 +22,7 @@ export default function NavIcons() {
 
   return (
     <>
-      <button className="fs-icon-btn hidden lg:inline-flex" aria-label="Account" onClick={handleProfile}>
+      <button className="fs-icon-btn" aria-label="Account" onClick={handleProfile}>
         <svg width="18" height="18" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5">
           <circle cx="10" cy="7" r="3.2" />
           <path d="M3.5 17a6.5 6.5 0 0 1 13 0" />

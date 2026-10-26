@@ -1292,3 +1292,214 @@
   .fs-card:hover { transform: none; }
 }
 
+
+/* ============ accessibility ============ */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--fs-accent);
+  outline-offset: 2px;
+}
+.fs-search input:focus-visible { outline: none; }
+.fs-skip-link {
+  position: absolute; left: 16px; top: -48px; z-index: 100;
+  background: var(--fs-ink); color: var(--fs-bg);
+  padding: 10px 16px; border-radius: 999px; font-size: 13px;
+  transition: top .15s ease;
+}
+.fs-skip-link:focus { top: 12px; }
+html.fs-scroll-lock, html.fs-scroll-lock body { overflow: hidden; }
+html, body { overflow-x: clip; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Touch screens have no hover, so keep quick-add visible. */
+@media (hover: none) {
+  .fs-card-quick { opacity: 1; transform: translateX(-50%) translateY(0); }
+}
+
+/* ============ filters drawer (mobile only) ============ */
+.fs-filters-head, .fs-filters-scrim, .fs-filters-apply, .fs-toolbar-btn--filters { display: none; }
+
+/* ============ responsive ============
+   The original prototype emulated mobile with `--compact` modifier classes.
+   These breakpoints apply the same layouts to the real site. */
+.fs-nav-burger { display: none; }
+
+@media (max-width: 1100px) {
+  .fs-nav-inner { padding: 14px 24px; gap: 16px; }
+  .fs-nav-links { gap: 20px; }
+  .fs-hero { padding: 32px 24px 56px; }
+  .fs-hero-title { font-size: 68px; }
+  .fs-section, .fs-section--cream { padding-left: 24px; padding-right: 24px; }
+  .fs-cats { grid-template-columns: repeat(3, 1fr); }
+  .fs-edit { padding: 0 24px; }
+  .fs-quotes { padding: 40px 24px; }
+  .fs-list-banner { margin: 16px 24px; padding: 40px 32px; }
+  .fs-list-toolbar { margin: 0 24px; padding: 14px 0; }
+  .fs-list-body { padding: 24px 24px 72px; grid-template-columns: 200px 1fr; gap: 24px; }
+  .fs-list-grid { grid-template-columns: repeat(2, 1fr); }
+  .fs-product { padding: 20px 24px 72px; }
+  .fs-product-grid { gap: 32px; }
+  .fs-product-title { font-size: 46px; }
+  .fs-checkout { padding: 24px 24px 72px; }
+  .fs-foot { padding: 56px 24px 28px; }
+  .fs-foot-top { grid-template-columns: 1fr 1fr; gap: 40px; }
+  .fs-foot-cols { grid-column: 1 / -1; order: 3; }
+}
+
+@media (max-width: 1023px) {
+  .fs-nav-burger { display: inline-flex; }
+  .fs-nav-links { display: none; }
+  .fs-search { padding: 12px 24px; }
+  .fs-search-results { margin: 0 24px; }
+}
+
+@media (max-width: 900px) {
+  .fs-hero { grid-template-columns: 1fr; gap: 28px; }
+  .fs-hero-cream { padding-right: 0; }
+  .fs-hero-image { min-height: 420px; }
+  .fs-section-title { font-size: 36px; }
+  .fs-edit { grid-template-columns: 1fr; }
+  .fs-edit-img { border-radius: var(--fs-radius-lg) var(--fs-radius-lg) 0 0; min-height: 300px; }
+  .fs-edit-body { border-radius: 0 0 var(--fs-radius-lg) var(--fs-radius-lg); padding: 36px 28px; }
+  .fs-edit-title { font-size: 34px; }
+  .fs-sub { padding: 72px 24px; }
+  .fs-sub-title { font-size: 42px; }
+  .fs-quotes { grid-template-columns: 1fr; }
+  .fs-grid { grid-template-columns: repeat(2, 1fr); gap: 20px 16px; }
+
+  .fs-list-banner { grid-template-columns: 1fr; min-height: 0; }
+  .fs-list-banner-img { display: none; }
+  .fs-list-title { font-size: 42px; }
+  .fs-list-toolbar { top: 61px; flex-wrap: wrap; gap: 10px; }
+  .fs-toolbar-cats { order: 3; flex-basis: 100%; }
+  .fs-toolbar-btn--filters { display: inline-flex; }
+  .fs-list-body { grid-template-columns: 1fr; }
+
+  /* Filters become a slide-up sheet. */
+  .fs-filters {
+    position: fixed; left: 0; right: 0; bottom: 0; top: auto; z-index: 65;
+    max-height: 85vh; overflow-y: auto;
+    background: var(--fs-bg);
+    border-radius: var(--fs-radius-lg) var(--fs-radius-lg) 0 0;
+    padding: 0 20px 20px;
+    box-shadow: 0 -12px 40px rgba(0,0,0,0.15);
+    transform: translateY(105%);
+    visibility: hidden;
+    transition: transform .3s ease, visibility .3s;
+  }
+  .fs-filters--open { transform: none; visibility: visible; }
+  .fs-filters-scrim {
+    display: block; position: fixed; inset: 0; z-index: 64;
+    background: rgba(0,0,0,0.4);
+    animation: fs-fade .2s ease;
+  }
+  .fs-filters-head {
+    display: flex; justify-content: space-between; align-items: center;
+    position: sticky; top: 0; z-index: 1;
+    background: var(--fs-bg);
+    padding: 16px 0 12px;
+    border-bottom: 1px solid var(--fs-line-soft);
+  }
+  .fs-filters-head h4 { font-family: var(--fs-serif); font-weight: 500; font-size: 24px; margin: 0; }
+  .fs-filters-apply { display: inline-flex; }
+
+  .fs-product-grid { grid-template-columns: 1fr; margin-bottom: 56px; }
+  .fs-checkout-body { grid-template-columns: 1fr; gap: 28px; }
+  .fs-checkout-summary { position: static; order: -1; }
+}
+
+@media (max-width: 560px) {
+  .fs-banner { font-size: 11px; }
+  .fs-nav-inner { padding: 10px 12px; gap: 4px; }
+  .fs-logo { gap: 8px; }
+  .fs-logo-word { font-size: 19px; }
+  .fs-search { padding: 12px 16px; }
+  .fs-search-results { margin: 0; }
+
+  .fs-hero { padding: 20px 16px 40px; }
+  .fs-hero-title { font-size: 46px; margin: 16px 0 20px; }
+  .fs-hero-eyebrow { font-size: 10px; letter-spacing: 0.12em; }
+  .fs-hero-lead { font-size: 15px; margin-bottom: 24px; }
+  .fs-hero-actions { margin-bottom: 28px; }
+  .fs-hero-actions .fs-btn { flex: 1 1 auto; }
+  .fs-hero-meta { gap: 10px; }
+  .fs-hero-meta b { font-size: 19px; }
+  .fs-hero-meta span { font-size: 11px; }
+  .fs-hero-image { min-height: 380px; }
+  .fs-hero-stamp { width: 76px; height: 76px; top: 16px; right: 16px; }
+  .fs-hero-card { left: 12px; right: 12px; bottom: 12px; max-width: none; }
+
+  .fs-ticker { margin-bottom: 40px; }
+  .fs-ticker-track { font-size: 19px; gap: 32px; }
+
+  .fs-section { padding: 32px 16px; }
+  .fs-section--cream { padding: 40px 16px; }
+  .fs-section-head { margin-bottom: 22px; flex-wrap: wrap; }
+  .fs-section-title { font-size: 30px; }
+  .fs-cats { grid-template-columns: repeat(2, 1fr); gap: 12px; }
+  .fs-cat-foot h4 { font-size: 18px; }
+
+  .fs-grid, .fs-list-grid { grid-template-columns: 1fr 1fr; gap: 12px; }
+  .fs-card-img { aspect-ratio: 3/4; }
+  .fs-card-foot { padding: 12px 12px 14px; gap: 6px; }
+  .fs-card-row { flex-direction: column; gap: 2px; }
+  .fs-card-row h4 { font-size: 17px; }
+  .fs-card-price { font-size: 16px; }
+  .fs-card-desc { font-size: 12px; }
+  .fs-card-meta-text { display: none; }
+  .fs-card-quick { padding: 7px 11px; font-size: 11px; bottom: 8px; white-space: nowrap; }
+
+  .fs-edit { padding: 0 16px; }
+  .fs-edit-img { min-height: 240px; }
+  .fs-edit-body { padding: 28px 22px; }
+  .fs-edit-title { font-size: 28px; }
+  .fs-sub { padding: 56px 16px; }
+  .fs-sub-title { font-size: 32px; }
+  .fs-quotes { padding: 28px 16px; margin-bottom: 56px; gap: 14px; }
+  .fs-quote blockquote { font-size: 19px; }
+
+  .fs-list-banner { margin: 12px 16px; padding: 28px 22px; }
+  .fs-list-title { font-size: 34px; }
+  .fs-list-toolbar { margin: 0 16px; top: 57px; }
+  .fs-toolbar-right { margin-left: auto; gap: 10px; }
+  .fs-toolbar-sort-label { display: none; }
+  .fs-list-body { padding: 16px 16px 56px; }
+
+  .fs-product { padding: 16px 16px 0; }
+  .fs-product-title { font-size: 36px; }
+  .fs-product-price-now { font-size: 30px; }
+  .fs-size-row { grid-template-columns: 1fr 1fr; }
+  .fs-product-cta {
+    position: sticky; bottom: 0; z-index: 5;
+    background: var(--fs-bg);
+    margin: 0 -16px; padding: 12px 16px calc(12px + env(safe-area-inset-bottom));
+    border-top: 1px solid var(--fs-line);
+  }
+  .fs-delivery-grid { grid-template-columns: 1fr; }
+
+  .fs-checkout { padding: 16px 16px 56px; }
+  .fs-checkout-head h1 { font-size: 30px; }
+  .fs-steps { gap: 10px; }
+  .fs-step { font-size: 12px; }
+  .fs-form-grid { grid-template-columns: 1fr; }
+  .fs-form-actions { flex-direction: column-reverse; }
+  .fs-form-actions .fs-btn { width: 100%; }
+
+  .fs-success { padding: 32px 16px 64px; }
+  .fs-success h1 { font-size: 40px; }
+  .fs-success-meta { grid-template-columns: 1fr; }
+
+  .fs-drawer { width: 100%; }
+
+  .fs-foot { padding: 44px 16px 24px; margin-top: 40px; }
+  .fs-foot-top { grid-template-columns: 1fr; gap: 32px; }
+  .fs-foot-cols { grid-template-columns: 1fr 1fr; row-gap: 24px; }
+  .fs-foot-bottom { flex-direction: column; gap: 6px; }
+}

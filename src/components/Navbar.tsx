@@ -54,6 +54,19 @@ export default function Navbar() {
     return () => { if (debounceRef.current) clearTimeout(debounceRef.current); };
   }, [query]);
 
+  // Lock page scroll and close on Escape while the mobile menu is open.
+  useEffect(() => {
+    if (!mobileNav) return;
+    const root = document.documentElement;
+    root.classList.add("fs-scroll-lock");
+    const onKey = (e: KeyboardEvent) => { if (e.key === "Escape") setMobileNav(false); };
+    window.addEventListener("keydown", onKey);
+    return () => {
+      root.classList.remove("fs-scroll-lock");
+      window.removeEventListener("keydown", onKey);
+    };
+  }, [mobileNav]);
+
   const closeSearch = () => {
     setSearchOpen(false);
     setQuery("");
@@ -71,7 +84,7 @@ export default function Navbar() {
     <header className="fs-nav">
       <div className="fs-nav-inner">
         <button
-          className="fs-icon-btn fs-nav-burger lg:hidden"
+          className="fs-icon-btn fs-nav-burger"
           onClick={() => setMobileNav(true)}
           aria-label="Menu"
         >
@@ -85,7 +98,7 @@ export default function Navbar() {
           <span className="fs-logo-word">Flower&nbsp;Shop</span>
         </Link>
 
-        <nav className="fs-nav-links hidden lg:flex">
+        <nav className="fs-nav-links">
           {navLinks.map((n) => (
             <Link key={n.slug} href={`/list?cat=${n.slug}`}>
               {n.title}
@@ -95,7 +108,7 @@ export default function Navbar() {
 
         <div className="fs-nav-actions">
           <button
-            className="fs-icon-btn hidden lg:inline-flex"
+            className="fs-icon-btn"
             onClick={() => (searchOpen ? closeSearch() : setSearchOpen(true))}
             aria-label="Search"
           >
