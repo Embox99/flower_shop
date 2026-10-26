@@ -128,6 +128,9 @@ npm run dev
 email:    owner@flower-shop.local
 password: studio
 ```
+
+## API
+
 ### Public
 - `GET  /api/products` — live products w/ filters (category, q, min, max, color, stems, deliver, sort, page)
 - `GET  /api/products/[slug]` — single product w/ variants + stems
