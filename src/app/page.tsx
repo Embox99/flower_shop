@@ -9,6 +9,10 @@ import Testimonials from "../components/Testimonials";
 import Skeleton from "../components/Skeleton";
 import Link from "next/link";
 
+// Prerendered and refreshed every 5 minutes (ISR); admin edits refresh it
+// sooner via the "catalog" cache tag.
+export const revalidate = 300;
+
 export default function Home() {
   return (
     <main className="fs-home">

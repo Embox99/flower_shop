@@ -1,0 +1,47 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: flower
+          POSTGRES_PASSWORD: flower
+          POSTGRES_DB: flower_shop
+        ports: ["5433:5432"]
+        options: >-
+          --health-cmd "pg_isready -U flower -d flower_shop"
+          --health-interval 5s --health-timeout 5s --health-retries 10
+    env:
+      DATABASE_URL: postgresql://flower:flower@localhost:5433/flower_shop?schema=public
+      NEXTAUTH_SECRET: ci-only-secret
+      NEXTAUTH_URL: http://localhost:3000
+      APP_URL: http://localhost:3000
+      EMAIL_SERVER: smtp://localhost:1025
+      EMAIL_FROM: Flower Shop <ci@flower-shop.local>
+      OWNER_EMAIL: owner@flower-shop.local
+      OWNER_PASSWORD: ci-only-password
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - run: npx prisma generate
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm test
+      - run: npx prisma migrate deploy && npm run db:seed
+      - run: npm run build
