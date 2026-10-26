@@ -1,4 +1,3 @@
-"use client";
 import React from "react";
 
 type Props = {
@@ -14,7 +13,7 @@ type Props = {
  * consistent and offline-friendly.
  */
 const BouquetIllustration: React.FC<Props> = ({ palette, seed = 1, className, style }) => {
-  const blooms = React.useMemo(() => {
+  const blooms = (() => {
     let s = seed * 9301 + 49297;
     const rand = () => { s = (s * 9301 + 49297) % 233280; return s / 233280; };
     const arr = [];
@@ -30,7 +29,7 @@ const BouquetIllustration: React.FC<Props> = ({ palette, seed = 1, className, st
     }
     arr.sort((a, b) => a.r - b.r);
     return arr;
-  }, [palette, seed]);
+  })();
 
   return (
     <svg
