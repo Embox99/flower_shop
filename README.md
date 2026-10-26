@@ -12,6 +12,7 @@
 ![Prisma](https://img.shields.io/badge/Prisma-5-2D3748?logo=prisma&logoColor=white)
 ![NextAuth](https://img.shields.io/badge/Auth.js-NextAuth-1B7CFF)
 [![CI](https://github.com/Embox99/flower_shop/actions/workflows/ci.yml/badge.svg)](https://github.com/Embox99/flower_shop/actions/workflows/ci.yml)
+![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)
 
 </div>
 
@@ -225,5 +226,7 @@ CI runs lint, typecheck, unit tests and a production build on every push and pul
 Issues and pull requests are welcome. Run `npm run lint && npm run typecheck && npm test` before opening a PR.
 
 <div align="center">
+Released under the [MIT License](./LICENSE).
+
 <sub>If this saved you a Wix subscription, consider giving it a ⭐.</sub>
 </div>

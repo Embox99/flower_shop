@@ -2,6 +2,7 @@
   "name": "flower-shop",
   "version": "2.0.0",
   "private": true,
+  "license": "MIT",
   "scripts": {
     "dev":       "next dev",
     "build":     "prisma generate && next build",
