@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Cormorant_Garamond, Inter_Tight, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
 import Banner from "../components/Banner";
@@ -28,20 +28,41 @@ const mono = JetBrains_Mono({
   display: "swap",
 });
 
+const description =
+  "A small flower studio in Florentin, Tel Aviv. Cut at first light, delivered the same afternoon.";
+
 export const metadata: Metadata = {
-  title: "Flower Shop — hand-tied in Tel Aviv",
-  description:
-    "A small flower studio in Florentin, Tel Aviv. Cut at first light, delivered the same afternoon.",
+  metadataBase: new URL(process.env.APP_URL || "http://localhost:3000"),
+  title: {
+    default: "Flower Shop — hand-tied in Tel Aviv",
+    template: "%s · Flower Shop",
+  },
+  description,
+  openGraph: {
+    siteName: "Flower Shop",
+    title: "Flower Shop — hand-tied in Tel Aviv",
+    description,
+    type: "website",
+    images: ["/images/main_preview.png"],
+  },
+  twitter: { card: "summary_large_image" },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#faf6ef",
+  width: "device-width",
+  initialScale: 1,
 };
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" className={`${serif.variable} ${sans.variable} ${mono.variable}`}>
       <body className="bg-bg text-ink font-sans antialiased">
+        <a href="#main" className="fs-skip-link">Skip to content</a>
         <Providers>
           <Banner />
           <Navbar />
-          {children}
+          <div id="main">{children}</div>
           <Footer />
           <CartDrawer />
           <Toast />
