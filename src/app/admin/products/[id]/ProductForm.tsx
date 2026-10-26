@@ -86,7 +86,7 @@ export default function ProductForm({ product, categories }: { product?: Product
 
       {error && <div style={{ background: "#fde9e6", color: "#8a3520", border: "1px solid #f0c6c0", padding: "10px 14px", borderRadius: 8, marginBottom: 14, fontSize: 13 }}>{error}</div>}
 
-      <div style={{ display: "grid", gridTemplateColumns: "1.6fr 1fr", gap: 16 }}>
+      <div className="ad-grid-2">
         <div>
           <div className="ad-form-section">
             <h3>Basics</h3>

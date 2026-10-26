@@ -77,7 +77,7 @@ export default function DeliveriesBoard({ orders }: { orders: BoardOrder[] }) {
       {error && (
         <div style={{ color: "var(--ad-warn)", fontSize: 13, marginBottom: 10 }}>{error}</div>
       )}
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: 14, alignItems: "flex-start" }}>
+      <div className="ad-board">
         {COLUMNS.map((col) => (
           <div
             key={col.key}

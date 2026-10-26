@@ -34,10 +34,12 @@
   font-family: var(--font-sans), 'Inter Tight', system-ui, sans-serif;
   font-size: 14px;
 }
-.ad-frame * { box-sizing: border-box; }
-.ad-frame button { font: inherit; cursor: pointer; }
-.ad-frame a { color: inherit; text-decoration: none; }
-.ad-frame input, .ad-frame select, .ad-frame textarea { font: inherit; }
+:where(.ad-frame) * { box-sizing: border-box; }
+:where(.ad-frame) button { font: inherit; cursor: pointer; }
+/* :where() keeps these resets at zero specificity so component classes
+   (e.g. .ad-btn--dark on a <Link>) win. */
+:where(.ad-frame) a { color: inherit; text-decoration: none; }
+:where(.ad-frame) :is(input, select, textarea) { font: inherit; }
 
 /* sidebar */
 .ad-sidebar {
@@ -56,6 +58,7 @@
 .ad-sidebar-brand-word {
   font-family: var(--font-serif), 'Cormorant Garamond', serif;
   font-size: 20px; font-weight: 500;
+  white-space: nowrap;
 }
 .ad-sidebar-brand-sub {
   font-family: var(--font-mono), 'JetBrains Mono', monospace;
@@ -256,7 +259,7 @@
   font-size: 13px; color: var(--ad-ink); vertical-align: middle;
 }
 .ad-table tbody tr:hover { background: var(--ad-bg); cursor: pointer; }
-.ad-table-id { font-family: var(--font-mono), monospace; font-size: 12px; color: var(--ad-ink-soft); }
+.ad-table-id { font-family: var(--font-mono), monospace; font-size: 12px; color: var(--ad-ink-soft); white-space: nowrap; }
 .ad-table-money { font-family: var(--font-mono), monospace; font-weight: 500; text-align: right; }
 
 .ad-toolbar { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; flex-wrap: wrap; }
@@ -310,3 +313,82 @@
 .ad-info-body { display: flex; flex-direction: column; gap: 7px; font-size: 13px; }
 .ad-info-row { display: flex; justify-content: space-between; gap: 12px; }
 .ad-info-row span:first-child { color: var(--ad-ink-mute); font-size: 12px; }
+
+/* ============ shell additions ============ */
+.ad-nav-store { margin-top: 6px; color: rgba(255,255,255,0.6); }
+.ad-sidebar-user-text { min-width: 0; flex: 1; }
+.ad-sidebar-user-name { font-size: 13px; color: #fff; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ad-sidebar-user-role { font-size: 11px; color: rgba(255,255,255,0.5); text-transform: capitalize; }
+.ad-sidebar-signout {
+  display: inline-flex; align-items: center; justify-content: center;
+  width: 30px; height: 30px; border-radius: 8px; flex-shrink: 0;
+  border: none; background: transparent; color: rgba(255,255,255,0.6);
+}
+.ad-sidebar-signout:hover { background: rgba(255,255,255,0.08); color: #fff; }
+.ad-sidebar-scrim { display: none; }
+
+.ad-burger {
+  display: none; align-items: center; justify-content: center;
+  width: 36px; height: 36px; border-radius: 8px; flex-shrink: 0;
+  border: 1px solid var(--ad-line); background: var(--ad-bg-card); color: var(--ad-ink);
+}
+.ad-topbar-clock {
+  margin-left: auto;
+  display: flex; flex-direction: column; align-items: flex-end;
+  font-family: var(--font-mono), monospace; font-size: 10px;
+  letter-spacing: 0.08em; color: var(--ad-ink-mute);
+  text-transform: uppercase; line-height: 1.3; white-space: nowrap;
+}
+.ad-topbar-clock b { color: var(--ad-ink); font-weight: 500; }
+
+.ad-board { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; align-items: flex-start; }
+.ad-hours-grid { display: grid; grid-template-columns: 120px 1fr 1fr auto; gap: 10px; align-items: center; }
+.ad-table-wrap { overflow-x: auto; }
+.ad-table { min-width: 640px; }
+
+:where(.ad-frame) :is(a, button, input, select, textarea):focus-visible {
+  outline: 2px solid var(--ad-accent);
+  outline-offset: 2px;
+}
+
+/* ============ responsive ============ */
+@media (max-width: 1100px) {
+  .ad-kpis { grid-template-columns: repeat(2, 1fr); }
+  .ad-board { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 900px) {
+  .ad-frame { grid-template-columns: 1fr; }
+  .ad-sidebar {
+    position: fixed; left: 0; top: 0; bottom: 0; z-index: 50;
+    width: 264px; height: 100%;
+    transform: translateX(-100%);
+    transition: transform .25s ease, box-shadow .25s ease;
+  }
+  .ad-sidebar--open { transform: none; box-shadow: 10px 0 40px rgba(0,0,0,0.25); }
+  .ad-sidebar-scrim { display: block; position: fixed; inset: 0; z-index: 49; background: rgba(0,0,0,0.4); }
+  .ad-burger { display: inline-flex; }
+  .ad-topbar { padding: 10px 16px; gap: 10px; }
+  .ad-search-wrap { max-width: none; }
+  .ad-search-kbd { display: none; }
+  .ad-page { padding: 20px 16px; }
+  .ad-h1 { font-size: 26px; }
+  .ad-grid-2, .ad-detail-grid, .ad-form-row-2 { grid-template-columns: 1fr; }
+}
+
+@media (max-width: 600px) {
+  .ad-topbar-clock { display: none; }
+  .ad-kpis { gap: 10px; }
+  .ad-kpi { padding: 12px 14px; }
+  .ad-kpi-value { font-size: 26px; }
+  .ad-board { grid-template-columns: 1fr; }
+  .ad-hours-grid { grid-template-columns: 1fr 1fr; }
+  .ad-hours-grid > div > span:first-child { grid-column: 1 / -1; }
+  .ad-page-head { gap: 12px; }
+  .ad-tabs { overflow-x: auto; max-width: 100%; }
+  .ad-search-input { font-size: 16px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ad-sidebar { transition: none; }
+}
