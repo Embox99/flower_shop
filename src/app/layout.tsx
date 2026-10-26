@@ -7,6 +7,7 @@ import Footer from "../components/Footer";
 import CartDrawer from "../components/CartDrawer";
 import Toast from "../components/Toast";
 import Providers from "./providers";
+import ShopChrome from "../components/ShopChrome";
 
 const serif = Cormorant_Garamond({
   weight: ["400", "500", "600"],
@@ -58,14 +59,13 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className={`${serif.variable} ${sans.variable} ${mono.variable}`}>
       <body className="bg-bg text-ink font-sans antialiased">
-        <a href="#main" className="fs-skip-link">Skip to content</a>
         <Providers>
-          <Banner />
-          <Navbar />
-          <div id="main">{children}</div>
-          <Footer />
-          <CartDrawer />
-          <Toast />
+          <ShopChrome
+            top={<><Banner /><Navbar /></>}
+            bottom={<><Footer /><CartDrawer /><Toast /></>}
+          >
+            {children}
+          </ShopChrome>
         </Providers>
       </body>
     </html>

@@ -6,7 +6,8 @@ import AdminTopbar from "../../components/admin/AdminTopbar";
 import "./admin.css";
 
 export const metadata = {
-  title: "Flower Shop · Admin",
+  title: "Studio admin",
+  robots: { index: false, follow: false },
 };
 
 export default async function AdminLayout({ children }: { children: React.ReactNode }) {
