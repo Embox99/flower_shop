@@ -2,6 +2,7 @@ import { z } from "zod";
 import { prisma } from "../../../../../lib/prisma";
 import { json, route, bad, readBody } from "../../../../../lib/api";
 import { requireStaff } from "../../../../../lib/auth-helpers";
+import { invalidateCatalog } from "../../../../../lib/catalog";
 
 /** GET /api/admin/products/[id] — full product with variants + images + stems. */
 export const GET = route(async (_req: Request, { params }: { params: Promise<{ id: string }> }) => {
@@ -51,6 +52,7 @@ export const PATCH = route(async (req: Request, { params }: { params: Promise<{ 
     where: { id: existing.id },
     data: { ...data, palette: data.palette as any },
   });
+  invalidateCatalog();
   return json({ product });
 });
 
@@ -68,5 +70,6 @@ export const DELETE = route(async (req: Request, { params }: { params: Promise<{
   } else {
     await prisma.product.update({ where: { id: existing.id }, data: { status: "ARCHIVED" } });
   }
+  invalidateCatalog();
   return json({ ok: true });
 });

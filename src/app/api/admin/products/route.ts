@@ -2,6 +2,7 @@ import { z } from "zod";
 import { prisma } from "../../../../lib/prisma";
 import { json, route, readBody, readPaging } from "../../../../lib/api";
 import { requireStaff } from "../../../../lib/auth-helpers";
+import { invalidateCatalog } from "../../../../lib/catalog";
 
 /** GET /api/admin/products */
 export const GET = route(async (req: Request) => {
@@ -55,5 +56,6 @@ export const POST = route(async (req: Request) => {
     // so Prisma's create union can't be satisfied without a cast.
     data: { ...data, categoryId: data.categoryId ?? null } as any,
   });
+  invalidateCatalog();
   return json({ product }, { status: 201 });
 });

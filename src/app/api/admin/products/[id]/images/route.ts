@@ -2,6 +2,7 @@ import { z } from "zod";
 import { prisma } from "../../../../../../lib/prisma";
 import { json, route, bad, readBody } from "../../../../../../lib/api";
 import { requireStaff } from "../../../../../../lib/auth-helpers";
+import { invalidateCatalog } from "../../../../../../lib/catalog";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -29,5 +30,6 @@ export const POST = route(async (req: Request, { params }: Params) => {
       isPrimary: count === 0,
     },
   });
+  invalidateCatalog();
   return json({ image }, { status: 201 });
 });
