@@ -50,13 +50,31 @@ export async function readBody<S extends ZodSchema>(req: Request, schema: S): Pr
 }
 
 /**
- * Best-effort client IP for rate limiting. Reads the proxy headers a typical
- * deployment (Vercel, nginx, Cloudflare) sets; falls back to "unknown".
+ * Pick the client address out of an X-Forwarded-For chain.
+ *
+ * Each proxy *appends* the address it received the request from, so only the
+ * last `hops` entries were written by infrastructure we control. Anything to
+ * their left came from the client and can be forged — taking the first entry
+ * would let anyone dodge rate limits by sending a fresh fake IP each time.
+ */
+export function ipFromForwardedFor(header: string, hops: number): string | null {
+  const chain = header.split(",").map((s) => s.trim()).filter(Boolean);
+  if (hops < 1 || chain.length === 0) return null;
+  return chain[Math.max(0, chain.length - hops)] ?? null;
+}
+
+/**
+ * Client IP for rate limiting. TRUSTED_PROXY_HOPS is the number of proxies
+ * in front of the app (default 1: Vercel, a single nginx, …); set it to 0
+ * when the app is exposed directly so proxy headers are ignored.
  */
 export function clientIp(req: Request): string {
+  const parsed = parseInt(process.env.TRUSTED_PROXY_HOPS ?? "", 10);
+  const hops = Number.isFinite(parsed) ? parsed : 1;
+  if (hops < 1) return "unknown";
   const fwd = req.headers.get("x-forwarded-for");
-  if (fwd) return fwd.split(",")[0]!.trim();
-  return req.headers.get("x-real-ip") || "unknown";
+  const ip = fwd ? ipFromForwardedFor(fwd, hops) : null;
+  return ip || req.headers.get("x-real-ip") || "unknown";
 }
 
 /** Read paged query params: ?page=1&limit=20 */
