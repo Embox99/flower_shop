@@ -3,6 +3,7 @@ import { prisma } from "../../../lib/prisma";
 import { json, route, bad, readBody } from "../../../lib/api";
 import { getOrCreateCart, priceCart, mergeAnonCartIntoUserCart } from "../../../lib/cart";
 import { enforceRateLimit } from "../../../lib/rate-limit";
+import { lineProblem } from "../../../lib/pricing";
 import { auth } from "../../../lib/auth";
 
 /** GET /api/cart — current cart with line totals. */
@@ -32,9 +33,14 @@ export const POST = route(async (req: Request) => {
   const data = await readBody(req, addSchema);
   const cart = await getOrCreateCart();
 
-  // Validate product exists.
+  // Validate product exists and the variant belongs to it.
   const product = await prisma.product.findUnique({ where: { id: data.productId } });
   if (!product || product.status !== "ACTIVE") return bad("Product unavailable", 404);
+  const variant = data.variantId
+    ? await prisma.productVariant.findUnique({ where: { id: data.variantId } })
+    : null;
+  if (data.variantId && !variant) return bad("Variant unavailable", 404);
+  if (lineProblem(product, variant)) return bad("Variant unavailable", 404);
 
   // Merge if same product+variant already in cart.
   const existing = await prisma.cartItem.findFirst({

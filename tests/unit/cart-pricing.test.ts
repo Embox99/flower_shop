@@ -1,26 +1,38 @@
 import { describe, it, expect } from "vitest";
+import { lineProblem, unitPrice, VASE_CENTS } from "../../src/lib/pricing";
 
-// Re-implement priceCart shape locally for a pure unit test (the real one
-// touches Prisma; we test the calculation logic only).
-function priceLine(base: number, delta: number, qty: number, vase: boolean) {
-  const unit = base + delta + (vase ? 1400 : 0);
-  return { unit, total: unit * qty };
-}
+const product = { id: "p1", status: "ACTIVE", basePrice: 6400 };
+const variant = (priceDelta: number, productId = "p1", stockQty = 5) =>
+  ({ id: "v-" + productId, productId, priceDelta, stockQty });
 
 describe("cart pricing", () => {
   it("adds variant delta and vase upcharge", () => {
-    const { unit, total } = priceLine(6400, 1800, 2, true);
-    expect(unit).toBe(6400 + 1800 + 1400);
-    expect(total).toBe(unit * 2);
+    expect(unitPrice(product, variant(1800), true)).toBe(6400 + 1800 + VASE_CENTS);
   });
 
   it("handles negative deltas for smaller variants", () => {
-    const { unit } = priceLine(6400, -1200, 1, false);
-    expect(unit).toBe(5200);
+    expect(unitPrice(product, variant(-1200), false)).toBe(5200);
   });
 
   it("does not add vase when false", () => {
-    const { unit } = priceLine(6400, 0, 1, false);
-    expect(unit).toBe(6400);
+    expect(unitPrice(product, variant(0), false)).toBe(6400);
+  });
+
+  it("ignores the delta of another product's variant", () => {
+    expect(unitPrice(product, variant(-4000, "p2"), false)).toBe(6400);
+  });
+});
+
+describe("line validation", () => {
+  it("accepts a variant of the same product", () => {
+    expect(lineProblem(product, variant(0))).toBeNull();
+  });
+
+  it("rejects a variant borrowed from another product", () => {
+    expect(lineProblem(product, variant(-4000, "p2"))).toBe("unavailable");
+  });
+
+  it("rejects a missing product", () => {
+    expect(lineProblem(null, variant(0))).toBe("unavailable");
   });
 });
