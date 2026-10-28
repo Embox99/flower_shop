@@ -2,6 +2,7 @@ import { z } from "zod";
 import { prisma } from "../../../../../lib/prisma";
 import { json, route, bad, readBody } from "../../../../../lib/api";
 import { getOrCreateCart, priceCart } from "../../../../../lib/cart";
+import { lineProblem } from "../../../../../lib/pricing";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -18,8 +19,15 @@ export const PATCH = route(async (req: Request, { params }: Params) => {
   const cart = await getOrCreateCart();
 
   // Ownership check: the line must belong to the requester's cart.
-  const item = await prisma.cartItem.findFirst({ where: { id, cartId: cart.id } });
+  const item = await prisma.cartItem.findFirst({
+    where: { id, cartId: cart.id },
+    include: { product: true, variant: true },
+  });
   if (!item) return bad("Cart item not found", 404);
+
+  if (data.qty && data.qty > item.qty && lineProblem(item.product, item.variant, data.qty)) {
+    return bad(`"${item.product.name}" is out of stock`, 409);
+  }
 
   if (data.qty === 0) {
     await prisma.cartItem.delete({ where: { id: item.id } });

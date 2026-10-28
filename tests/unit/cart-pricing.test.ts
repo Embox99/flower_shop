@@ -35,4 +35,18 @@ describe("line validation", () => {
   it("rejects a missing product", () => {
     expect(lineProblem(null, variant(0))).toBe("unavailable");
   });
+
+  it("rejects products that are no longer live", () => {
+    expect(lineProblem({ ...product, status: "ARCHIVED" }, variant(0))).toBe("unavailable");
+    expect(lineProblem({ ...product, status: "DRAFT" }, variant(0))).toBe("unavailable");
+  });
+
+  it("rejects a line without a variant, since only variants carry stock", () => {
+    expect(lineProblem(product, null)).toBe("out of stock");
+  });
+
+  it("checks the requested quantity against stock", () => {
+    expect(lineProblem(product, variant(0, "p1", 3), 3)).toBeNull();
+    expect(lineProblem(product, variant(0, "p1", 3), 4)).toBe("out of stock");
+  });
 });

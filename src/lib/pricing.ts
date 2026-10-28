@@ -10,17 +10,22 @@ type ProductLike = { id: string; status: string; basePrice: number };
 type VariantLike = { id: string; productId: string; priceDelta: number; stockQty: number };
 
 /**
- * Why a cart line can't be sold, or null if it can. Stock lives on variants
- * only, so a line must name a variant of *this* product: a variant id taken
+ * Why a cart line can't be sold, or null if it can: the product must be live
+ * and have `qty` in stock. Stock lives on variants only, so a line must name
+ * a variant of *this* product: a variant id taken
  * from another product would otherwise price (and decrement stock) against
  * the wrong item.
  */
 export function lineProblem(
   product: ProductLike | null | undefined,
   variant: VariantLike | null | undefined,
+  qty = 1,
 ): string | null {
-  if (!product) return "unavailable";
-  if (variant && variant.productId !== product.id) return "unavailable";
+  if (!product || product.status !== "ACTIVE") return "unavailable";
+  // Stock is tracked per variant; a product without one has nothing to sell.
+  if (!variant) return "out of stock";
+  if (variant.productId !== product.id) return "unavailable";
+  if (variant.stockQty < qty) return "out of stock";
   return null;
 }
 

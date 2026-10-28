@@ -7,7 +7,7 @@ import { enforceRateLimit } from "../../../lib/rate-limit";
 import { cookies } from "next/headers";
 import { rememberOrder } from "../../../lib/orders";
 import { invalidateCatalog } from "../../../lib/catalog";
-import { DELIVERY_OPTIONS } from "../../../lib/pricing";
+import { DELIVERY_OPTIONS, lineProblem } from "../../../lib/pricing";
 
 const schema = z.object({
   recipientName: z.string().min(1, "Required"),
@@ -59,6 +59,16 @@ export const POST = route(async (req: Request) => {
   const priced = await priceCart(cart.id, data.delivery);
   if (priced.lines.length === 0) return bad("Cart is empty", 400);
 
+  // Products can be archived or sell out after they were added to the cart.
+  const items = await prisma.cartItem.findMany({
+    where: { cartId: cart.id },
+    include: { product: true, variant: true },
+  });
+  for (const it of items) {
+    const problem = lineProblem(it.product, it.variant, it.qty);
+    if (problem) return bad(`"${it.product.name}" is ${problem}`, 409);
+  }
+
   const session = await auth();
   let userId = session?.user?.id || null;
 
@@ -78,14 +88,13 @@ export const POST = route(async (req: Request) => {
   // transaction rolls back and nothing is persisted.
   const order = await prisma.$transaction(async (tx) => {
     // ── Decrement stock with an atomic guard ──────────────────────────────
-    // Only variant lines track stock (stockQty lives on ProductVariant). The
+    // Stock lives on ProductVariant, so every line must carry a variant. The
     // `stockQty: { gte: qty }` filter makes the check-and-decrement a single
     // race-free statement: if another concurrent checkout already took the
     // last units, updateMany affects 0 rows and we abort.
     for (const l of priced.lines) {
-      if (!l.variantId) continue; // no variant → no tracked inventory
-      const res = await tx.productVariant.updateMany({
-        where: { id: l.variantId, stockQty: { gte: l.qty } },
+      const res = !l.variantId ? { count: 0 } : await tx.productVariant.updateMany({
+        where: { id: l.variantId, productId: l.productId, stockQty: { gte: l.qty } },
         data: { stockQty: { decrement: l.qty } },
       });
       if (res.count === 0) {

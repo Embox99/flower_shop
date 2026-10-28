@@ -40,7 +40,6 @@ export const POST = route(async (req: Request) => {
     ? await prisma.productVariant.findUnique({ where: { id: data.variantId } })
     : null;
   if (data.variantId && !variant) return bad("Variant unavailable", 404);
-  if (lineProblem(product, variant)) return bad("Variant unavailable", 404);
 
   // Merge if same product+variant already in cart.
   const existing = await prisma.cartItem.findFirst({
@@ -51,6 +50,11 @@ export const POST = route(async (req: Request) => {
       addVase: data.addVase,
     },
   });
+
+  // Check stock against the line's total, not just this increment.
+  const problem = lineProblem(product, variant, (existing?.qty ?? 0) + data.qty);
+  if (problem === "unavailable") return bad("Variant unavailable", 404);
+  if (problem) return bad(`"${product.name}" is out of stock`, 409);
 
   if (existing) {
     await prisma.cartItem.update({
