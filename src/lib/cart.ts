@@ -8,7 +8,7 @@ import { cookies } from "next/headers";
 import { randomBytes } from "crypto";
 import { prisma } from "./prisma";
 import { auth } from "./auth";
-import { unitPrice } from "./pricing";
+import { unitPrice, deliveryFees, type DeliveryOption } from "./pricing";
 
 const CART_COOKIE = "fs_cart";
 const CART_MAX_AGE = 60 * 60 * 24 * 30; // 30 days
@@ -112,7 +112,7 @@ export async function mergeAnonCartIntoUserCart(userId: string) {
 
 /**
  * Delivery pricing, read from the owner-editable `shop.delivery` setting.
- * Falls back to a flat $6 fee if unset.
+ * Falls back to a $6 same-day fee if unset; per-method fees come from lib/pricing.
  */
 async function deliveryConfig() {
   const row = await prisma.setting.findUnique({ where: { key: "shop.delivery" } });
@@ -127,7 +127,7 @@ async function deliveryConfig() {
  * Compute totals from a cart's line items. Single source of pricing truth — never
  * trust the client.
  */
-export async function priceCart(cartId: string) {
+export async function priceCart(cartId: string, delivery: DeliveryOption = "today") {
   const all = await prisma.cartItem.findMany({
     where: { cartId },
     include: { product: true, variant: true },
@@ -158,10 +158,8 @@ export async function priceCart(cartId: string) {
       giftMessage: it.giftMessage,
     };
   });
-  const cfg = await deliveryConfig();
-  let deliveryFee = subtotal > 0 ? cfg.feeCents : 0;
-  // Free delivery once the basket clears the configured threshold.
-  if (cfg.freeOverCents != null && subtotal >= cfg.freeOverCents) deliveryFee = 0;
+  const deliveryOptions = deliveryFees(subtotal, await deliveryConfig());
+  const deliveryFee = deliveryOptions[delivery];
   const total = subtotal + deliveryFee;
-  return { lines, subtotal, deliveryFee, total, currency: "USD" };
+  return { lines, subtotal, delivery, deliveryFee, deliveryOptions, total, currency: "USD" };
 }

@@ -7,6 +7,7 @@ import { enforceRateLimit } from "../../../lib/rate-limit";
 import { cookies } from "next/headers";
 import { rememberOrder } from "../../../lib/orders";
 import { invalidateCatalog } from "../../../lib/catalog";
+import { DELIVERY_OPTIONS } from "../../../lib/pricing";
 
 const schema = z.object({
   recipientName: z.string().min(1, "Required"),
@@ -17,6 +18,8 @@ const schema = z.object({
   zip: z.string().optional(),
   country: z.string().default("IL"),
 
+  // The fee is derived from this on the server; the client never sends a price.
+  delivery: z.enum(DELIVERY_OPTIONS).default("today"),
   deliveryWindow: z.string().min(1),
   deliveryDate: z.string().datetime().optional(),
 
@@ -53,7 +56,7 @@ export const POST = route(async (req: Request) => {
 
   const data = await readBody(req, schema);
   const cart = await getOrCreateCart();
-  const priced = await priceCart(cart.id);
+  const priced = await priceCart(cart.id, data.delivery);
   if (priced.lines.length === 0) return bad("Cart is empty", 400);
 
   const session = await auth();

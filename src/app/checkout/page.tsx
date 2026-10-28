@@ -15,12 +15,16 @@ export default function CheckoutPage() {
   const router = useRouter();
   const lines = useCartStore((s) => s.lines);
   const subtotal = useCartStore((s) => s.subtotal);
-  const deliveryFee = useCartStore((s) => s.deliveryFee);
-  const total = useCartStore((s) => s.total);
+  const deliveryOptions = useCartStore((s) => s.deliveryOptions);
+  const defaultFee = useCartStore((s) => s.deliveryFee);
   const clear = useCartStore((s) => s.clear);
 
   const [step, setStep] = useState<1 | 2 | 3>(1);
   const [delivery, setDelivery] = useState("today");
+  // Fees come from the server per method; the order is charged the same way.
+  const deliveryFee = deliveryOptions[delivery] ?? defaultFee;
+  const total = subtotal + deliveryFee;
+  const feeLabel = (id: string) => (deliveryOptions[id] ? fmt(deliveryOptions[id]) : "free");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -86,6 +90,7 @@ export default function CheckoutPage() {
           city: form.city,
           zip: form.zip || undefined,
           country: "IL",
+          delivery,
           deliveryWindow: deliveryLabel(delivery),
           giftMessage: form.giftMessage || undefined,
           email: form.email || undefined,
@@ -130,12 +135,12 @@ export default function CheckoutPage() {
               <h3>When and how</h3>
               <div className="fs-deliv-options">
                 {[
-                  { id: "today",     t: "Today",            s: "Tel Aviv · before 6pm",       p: "$6" },
-                  { id: "tomorrow",  t: "Tomorrow morning", s: "Choose 9–12 or 12–3",         p: "$4" },
-                  { id: "date",      t: "Pick a date",      s: "Up to 30 days out",           p: "$4" },
-                  { id: "letterbox", t: "Letterbox",        s: "2–3 days, UK & EU",           p: "free" },
-                  { id: "pickup",    t: "Pick up at the shop", s: "Florentin 22 · today after 4pm", p: "free" },
-                ].map((d) => (
+                  { id: "today",     t: "Today",            s: "Tel Aviv · before 6pm" },
+                  { id: "tomorrow",  t: "Tomorrow morning", s: "Choose 9–12 or 12–3" },
+                  { id: "date",      t: "Pick a date",      s: "Up to 30 days out" },
+                  { id: "letterbox", t: "Letterbox",        s: "2–3 days, UK & EU" },
+                  { id: "pickup",    t: "Pick up at the shop", s: "Florentin 22 · today after 4pm" },
+                ].map((d) => ({ ...d, p: feeLabel(d.id) })).map((d) => (
                   <label key={d.id} className={"fs-deliv-opt" + (delivery === d.id ? " fs-deliv-opt--on" : "")}>
                     <input type="radio" name="deliv" checked={delivery === d.id} onChange={() => setDelivery(d.id)} />
                     <div>
