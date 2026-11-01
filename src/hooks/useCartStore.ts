@@ -27,6 +27,8 @@ export type CartState = {
   lines: CartLine[];
   subtotal: number;
   deliveryFee: number;
+  /** Server-computed fee for each checkout delivery method. */
+  deliveryOptions: Record<string, number>;
   total: number;
   currency: string;
   counter: number;
@@ -58,6 +60,7 @@ function apply(set: any, data: any) {
     lines: data.lines,
     subtotal: data.subtotal,
     deliveryFee: data.deliveryFee,
+    deliveryOptions: data.deliveryOptions ?? {},
     total: data.total,
     currency: data.currency,
     counter: data.lines.reduce((s: number, l: CartLine) => s + l.qty, 0),
@@ -81,7 +84,7 @@ async function mutate(set: any, work: () => Promise<any>) {
 }
 
 export const useCartStore = create<CartState>((set, get) => ({
-  cartId: null, lines: [], subtotal: 0, deliveryFee: 0, total: 0, currency: "USD",
+  cartId: null, lines: [], subtotal: 0, deliveryFee: 0, deliveryOptions: {}, total: 0, currency: "USD",
   counter: 0, loading: false,
 
   fetchCart: async () => {

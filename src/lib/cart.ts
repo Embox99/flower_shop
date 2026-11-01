@@ -8,6 +8,7 @@ import { cookies } from "next/headers";
 import { randomBytes } from "crypto";
 import { prisma } from "./prisma";
 import { auth } from "./auth";
+import { unitPrice, deliveryFees, type DeliveryOption } from "./pricing";
 
 const CART_COOKIE = "fs_cart";
 const CART_MAX_AGE = 60 * 60 * 24 * 30; // 30 days
@@ -63,7 +64,7 @@ export async function mergeAnonCartIntoUserCart(userId: string) {
   const token = store.get(CART_COOKIE)?.value;
   if (!token) return;
 
-  const anon = await prisma.cart.findUnique({ where: { token }, include: { items: true } });
+  const anon = await prisma.cart.findUnique({ where: { token }, include: { items: { include: { variant: true } } } });
   // Stale cookie pointing at nothing — drop it so it doesn't linger.
   if (!anon) { store.delete(CART_COOKIE); return; }
   // Already the user's own cart; just retire the anon cookie.
@@ -75,6 +76,8 @@ export async function mergeAnonCartIntoUserCart(userId: string) {
     (await prisma.cart.create({ data: { userId } }));
 
   for (const item of anon.items) {
+    // Never carry over a line whose variant belongs to a different product.
+    if (item.variant && item.variant.productId !== item.productId) continue;
     // Fold matching lines together instead of duplicating them.
     const existing = await prisma.cartItem.findFirst({
       where: {
@@ -109,7 +112,7 @@ export async function mergeAnonCartIntoUserCart(userId: string) {
 
 /**
  * Delivery pricing, read from the owner-editable `shop.delivery` setting.
- * Falls back to a flat $6 fee if unset.
+ * Falls back to a $6 same-day fee if unset; per-method fees come from lib/pricing.
  */
 async function deliveryConfig() {
   const row = await prisma.setting.findUnique({ where: { key: "shop.delivery" } });
@@ -124,17 +127,20 @@ async function deliveryConfig() {
  * Compute totals from a cart's line items. Single source of pricing truth — never
  * trust the client.
  */
-export async function priceCart(cartId: string) {
-  const items = await prisma.cartItem.findMany({
+export async function priceCart(cartId: string, delivery: DeliveryOption = "today") {
+  const all = await prisma.cartItem.findMany({
     where: { cartId },
     include: { product: true, variant: true },
   });
+  // A line pointing at another product's variant is corrupt (it would price
+  // and decrement stock against the wrong item) — drop it.
+  const corrupt = all.filter((it) => it.variant && it.variant.productId !== it.productId);
+  if (corrupt.length) await prisma.cartItem.deleteMany({ where: { id: { in: corrupt.map((it) => it.id) } } });
+  const items = all.filter((it) => !corrupt.includes(it));
+
   let subtotal = 0;
   const lines = items.map((it) => {
-    const base = it.product.basePrice;
-    const delta = it.variant?.priceDelta ?? 0;
-    const vase = it.addVase ? 1400 : 0;
-    const unit = base + delta + vase;
+    const unit = unitPrice(it.product, it.variant, it.addVase);
     const total = unit * it.qty;
     subtotal += total;
     return {
@@ -152,10 +158,8 @@ export async function priceCart(cartId: string) {
       giftMessage: it.giftMessage,
     };
   });
-  const cfg = await deliveryConfig();
-  let deliveryFee = subtotal > 0 ? cfg.feeCents : 0;
-  // Free delivery once the basket clears the configured threshold.
-  if (cfg.freeOverCents != null && subtotal >= cfg.freeOverCents) deliveryFee = 0;
+  const deliveryOptions = deliveryFees(subtotal, await deliveryConfig());
+  const deliveryFee = deliveryOptions[delivery];
   const total = subtotal + deliveryFee;
-  return { lines, subtotal, deliveryFee, total, currency: "USD" };
+  return { lines, subtotal, delivery, deliveryFee, deliveryOptions, total, currency: "USD" };
 }
